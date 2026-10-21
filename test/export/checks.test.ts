@@ -91,8 +91,8 @@ describe('VAT per rate (E-VAT-TOTAL)', () => {
     expect(findings[0]?.message).toContain(
       'at 7 % DATEV will compute 36.90 VAT from the bookings, but apaleo charged 43.44 as the sum of its per-line tax rounded to cents (difference -6.54',
     );
-    // The fixture's taxes are whole cents, so rounding per line adds nothing.
-    expect(findings[0]?.message).toContain("apaleo's precise total is 43.44; rounding per line adds 0 to it, which is never an error");
+    // The fixture's taxes are whole cents, so the per-line rounding is 0.
+    expect(findings[0]?.message).toContain("apaleo's precise total is 43.44; its per-line rounding (0) is already allowed for, so the remaining difference of -6.54 is the problem");
     expect(findings[1]?.message).toContain('the rounding total allows 0.00');
   });
 

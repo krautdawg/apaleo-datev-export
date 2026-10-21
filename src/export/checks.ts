@@ -166,7 +166,8 @@ export function checkVatByRate(lines: readonly LedgerLine[], result: PostingResu
         message:
           `at ${rate} % DATEV will compute ${formatCents(computed)} VAT from the bookings, but apaleo charged ${formatCents(charged)} ` +
           `as the sum of its per-line tax rounded to cents (difference ${formatCents(computed - charged)}, the rounding total allows ` +
-          `${formatCents(allowance)}). apaleo's precise total is ${precise}; rounding per line adds ${lineRounding} to it, which is never an error. ` +
+          `${formatCents(allowance)}). apaleo's precise total is ${precise}; its per-line rounding (${lineRounding}) is already allowed for, ` +
+          `so the remaining difference of ${formatCents(computed - charged)} is the problem. ` +
           REPORT_PROBLEM_HINT,
         value: String(rate),
       },
