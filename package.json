@@ -1,6 +1,6 @@
 {
   "name": "apaleo-datev-export",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Free open-source export from the apaleo hotel PMS to DATEV-Format (EXTF) Buchungsstapel files.",
   "private": true,
   "license": "MIT",

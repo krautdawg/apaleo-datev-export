@@ -6,7 +6,9 @@ Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 
 ## [Unveröffentlicht]
 
-**0.1.1 (geplant) – wichtige Korrektur für echte apaleo-Daten**
+## [0.1.1] - 2026-10-21
+
+**Wichtige Korrektur für echte apaleo-Daten**
 
 Der erste Test gegen eine echte apaleo-Sandbox (Hotels BER und VIE, 2026-10-21) hat gezeigt, dass 0.1.0 echte Daten nicht exportieren konnte. Diese Korrekturen beheben das; die aufgezeichneten Antworten liegen anonym in `test/fixtures/apaleo/live/`, und die Tests lassen den ganzen Export darüber laufen.
 

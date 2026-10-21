@@ -62,7 +62,7 @@ describe('apaleo-datev export', () => {
     const protocol = read(setup, PROTOCOL).toString('utf8');
     expect(protocol).toContain('Totals per DATEV account:');
     expect(protocol).toContain(`SHA-256: ${sha256(file)}`);
-    expect(protocol).toContain('Tool: apaleo-datev 0.1.0');
+    expect(protocol).toContain('Tool: apaleo-datev 0.1.1');
   });
 
   it('exits 2 and explains --month and --from/--to when the period is missing', async () => {
