@@ -115,7 +115,10 @@ Der Writer prüft jedes Feld gegen das DATEV-Format, bevor er eine Datei schreib
 
 ## Häufige Fragen nach dem ersten Live-Test
 
-**„the amount 12.5210084 is not a whole number of cents“.** Diese Meldung kam bis Version 0.1.0, weil apaleo Netto- und Steuerbeträge mit bis zu acht Nachkommastellen schickt. Seit 0.1.1 behält das Tool sie genau; nur der Bruttobetrag muss ganze Cent sein. Siehst du die Meldung noch, nutzt du eine alte Version: Hol die aktuelle (`git pull`, `pnpm install --frozen-lockfile`, `pnpm build`).
+**„the amount 12.5210084 is not a whole number of cents“.** Bis Version 0.1.0 kam diese Meldung, weil apaleo Netto- und Steuerbeträge mit bis zu acht Nachkommastellen schickt. Seit 0.1.1 behält das Tool sie genau; nur der Bruttobetrag muss ganze Cent sein. Schau, welches Feld die Meldung vor dem Doppelpunkt nennt:
+
+- `netAmount` oder `taxes[…].amount`: Du nutzt eine alte Version. Hol die aktuelle (`git pull`, `pnpm install --frozen-lockfile`, `pnpm build`).
+- `grossAmount`: Das ist auch in der aktuellen Version ein echter Fehler, ein Update hilft nicht. Eröffne ein Issue, wie die Meldung sagt, und lass Gastnamen weg.
 
 **Der Sammeldebitor 10000 bleibt offen, obwohl der Gast die Rechnung bezahlt hat.** Die Rechnung auf den Debitor bucht das Tool (`Forderung an Debitor`). Die Zahlung darauf über die Rechnungsaktionen von apaleo erzeugt aber keine Zeile im Buchungsjournal, solange die apaleo-Einstellung `performAccountingForOpenInvoiceActions` auf `false` steht. Das ist kein Fehler des Exports: Die Kanzlei bucht den Zahlungseingang vom Kontoauszug gegen den Debitor. Einzelheiten: [posting-rules.md](posting-rules.md#zahlung-auf-eine-rechnung-der-debitor-bleibt-offen).
 
