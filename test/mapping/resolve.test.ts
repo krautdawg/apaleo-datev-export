@@ -15,7 +15,7 @@ const ref = (number: string, type: string, parentNumber?: string): AccountRef =>
 
 const mapping = mappingOf([
   mappingRow({ apaleoAccount: '5011', apaleoType: 'Revenues', datevAccount: '8300' }),
-  mappingRow({ apaleoAccount: '5010', apaleoType: 'Revenues', datevAccount: '8301' }),
+  mappingRow({ apaleoAccount: 'RevenueAccommodation', apaleoType: 'Revenues', datevAccount: '8301' }),
   mappingRow({ apaleoAccount: '1200', apaleoType: 'Receivables', datevAccount: '1410' }),
   mappingRow({ apaleoAccount: '1611', apaleoType: '*any*', datevAccount: '1361' }),
   mappingRow({ apaleoAccount: '*', apaleoType: 'Receivables', datevAccount: '1411' }),
@@ -31,7 +31,7 @@ const datev = (account: AccountRef, rate: number | undefined = 0, chart?: ChartI
 
 describe('resolution order', () => {
   it('(1) takes the exact number and type first', () => {
-    expect(datev(ref('5011', 'Revenues', '5010'))).toBe('8300');
+    expect(datev(ref('5011', 'Revenues', 'RevenueAccommodation'))).toBe('8300');
   });
 
   it('(2) then the number with any type (Grman rows)', () => {
@@ -41,9 +41,9 @@ describe('resolution order', () => {
   it('(3) then the parent chain from the chart, with the same type', async () => {
     const chart = new ChartIndex((await loadBeispielData()).charts[BSP] ?? []);
     expect(datev(ref('5019', 'Revenues'), 19, chart)).toBe('8301');
-    // The chart wins over the line: 5019's parent in the chart is 5010.
+    // The chart wins over the line: 5019's parent in the chart is RevenueAccommodation.
     expect(datev(ref('5019', 'Revenues', '9999'), 19, chart)).toBe('8301');
-    expect(datev(ref('5019', 'Payments', '5010'))).toBe('1360');
+    expect(datev(ref('5019', 'Payments', 'RevenueAccommodation'))).toBe('1360');
   });
 
   it('resolves a per-reservation account with a parent to the parent row', () => {

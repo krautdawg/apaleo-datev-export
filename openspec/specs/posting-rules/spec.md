@@ -141,7 +141,7 @@ The posting module SHALL skip, and list with reason, count and unsigned gross to
 - **THEN** the summary lists 6 `SAME_ACCOUNT` lines with an unsigned gross total of 331.60, never a negative total
 
 ### Requirement: Field filling without personal data
-Belegfeld 1 SHALL be the receipt number when `posting.belegfeld1` is `receipt` (the default) and a receipt number exists, otherwise the reference. Buchungstext SHALL be German only, cut to 60 characters, and built from the business case and a German account label: `Erlös` or `Erlösminderung` plus the revenue label and rate (apaleo's standard revenue groups as `Logis`, `Speisen und Getränke`, `No-Show`, `Stornogebühr`, `Sonstige Erlöse`; other accounts by their own name without apaleo's English prefix `Revenues `); `Anzahlung`, `Umbuchung Anzahlung`, `Auflösung Anzahlung` or `Erstattung Anzahlung` for deposit increases via a payment, increases from a folio, decreases against a folio and decreases via a payment, each followed by the deposit's VAT rate; `Zahlung` or `Erstattung` plus a German payment label (card brands kept, generic English names translated, English suffixes such as `Credit Card Payment` dropped); `Forderung an Debitor`, `Umbuchung`, `Forderungsverlust`, `USt Anzahlung`, else `Buchung`. Buchungstext SHALL use the parent account name or a fixed label (`Gastforderung`, `Debitor`, `Anzahlung Gast`) instead of the leaf name for guest, booking and per-reservation accounts, and SHALL NOT contain guest names. KOST1 and KOST2 SHALL come from the mapping, preferring the VAT-side row.
+Belegfeld 1 SHALL be the receipt number when `posting.belegfeld1` is `receipt` (the default) and a receipt number exists, otherwise the reference. Buchungstext SHALL be German only, cut to 60 characters, and built from the business case and a German account label: `Erlös` (credited and positive, or debited and negative) or `Erlösminderung` (otherwise) plus the revenue label and rate (apaleo's standard revenue groups as `Logis`, `Speisen und Getränke`, `No-Show`, `Stornogebühr`, `Sonstige Erlöse`; other accounts by their own name without apaleo's English prefix `Revenues `); `Kurtaxe / City Tax`, `Kurtaxe / City Tax 2` or `Gästeabgabe` for CityTaxes, SecondCityTax and GuestLevies lines, prefixed with `Korrektur ` when reduced and followed by the rate only when it is not 0, never `Erlös`; `Anzahlung`, `Umbuchung Anzahlung`, `Auflösung Anzahlung` or `Erstattung Anzahlung` for deposit increases via a payment, increases from a folio, decreases against a folio and decreases via a payment, each followed by the deposit's VAT rate; `Zahlung` or `Erstattung` plus a German payment label (card brands kept, generic English names translated, English suffixes such as `Credit Card Payment` dropped); `Forderung an Debitor`, `Umbuchung`, `Forderungsverlust`, `USt Anzahlung`, else `Buchung`. Buchungstext SHALL use the parent account name or a fixed label (`Gastforderung`, `Debitor`, `Anzahlung Gast`) instead of the leaf name for guest, booking and per-reservation accounts, and SHALL NOT contain guest names. KOST1 and KOST2 SHALL come from the mapping, preferring the VAT-side row.
 
 #### Scenario: Payment without invoice
 - **WHEN** a payment line has receipt type PspReference number `PSP123` and reference `BSP-ABCDEF-1`
@@ -162,6 +162,14 @@ Belegfeld 1 SHALL be the receipt number when `posting.belegfeld1` is `receipt` (
 #### Scenario: Revenue text in German
 - **WHEN** a charge credits `RevenueAccommodation_Reduced:7.00` (apaleo name `Revenues Accommodation (7%)`)
 - **THEN** the Buchungstext is `Erlös Logis 7 %`
+
+#### Scenario: Revenue on the debit side
+- **WHEN** a line debits `RevenueAccommodation_Reduced:7.00` with a negative gross amount
+- **THEN** the Buchungstext is `Erlös Logis 7 %`, and with a positive gross amount `Erlösminderung Logis 7 %`
+
+#### Scenario: City tax in German
+- **WHEN** a charge credits a CityTaxes account named `City Tax 0%` without VAT
+- **THEN** the Buchungstext is `Kurtaxe / City Tax`, never `Erlös` or `Buchung City Tax 0%`
 
 #### Scenario: No English on the recorded day
 - **WHEN** the recorded BER day 2026-10-21 is posted

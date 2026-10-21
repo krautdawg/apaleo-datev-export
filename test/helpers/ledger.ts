@@ -16,7 +16,7 @@ export function ledgerLine(overrides: Partial<LedgerLine> = {}): LedgerLine {
     businessDate: '2026-09-14',
     postedAt: '2026-09-14T15:40:00Z',
     debit: { number: 'BSP-ABCDEF-1_Receivables', name: 'Receivables for Reservation BSP-ABCDEF-1', type: 'Receivables' },
-    credit: { number: '5011', name: 'Accommodation 7%', type: 'Revenues', parentNumber: '5010' },
+    credit: { number: '5011', name: 'Accommodation 7%', type: 'Revenues', parentNumber: 'RevenueAccommodation' },
     command: 'PostCharge',
     currency: 'EUR',
     grossCents: 10000,

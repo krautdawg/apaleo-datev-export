@@ -58,10 +58,10 @@ describe('getChartOfAccounts', () => {
     const accounts = await source.getChartOfAccounts(BSP);
     const pick = (number: string) => accounts.find((a) => a.number === number && a.ledger === 'global');
     expect(pick('5000')).toEqual({ number: '5000', name: 'Revenues', type: 'Revenues', ledger: 'global', isArchived: false, hasChildren: true });
-    expect(pick('5010')).toMatchObject({ name: 'Accommodation', parentNumber: '5000', hasChildren: true });
-    expect(pick('5010')?.vat).toBeUndefined();
-    expect(pick('5011')).toMatchObject({ parentNumber: '5010', vat: { type: 'Reduced', percent: 7 }, hasChildren: false });
-    expect(pick('5019')).toMatchObject({ parentNumber: '5010', vat: { type: 'Normal', percent: 19 } });
+    expect(pick('RevenueAccommodation')).toMatchObject({ name: 'Accommodation', parentNumber: '5000', hasChildren: true });
+    expect(pick('RevenueAccommodation')?.vat).toBeUndefined();
+    expect(pick('5011')).toMatchObject({ parentNumber: 'RevenueAccommodation', vat: { type: 'Reduced', percent: 7 }, hasChildren: false });
+    expect(pick('5019')).toMatchObject({ parentNumber: 'RevenueAccommodation', vat: { type: 'Normal', percent: 19 } });
     expect(pick('5111')).toMatchObject({ parentNumber: '5110', vat: { type: 'Reduced', percent: 7 } });
     expect(pick('5990')).toMatchObject({ isArchived: true, vat: { type: 'Without', percent: 0 } });
   });

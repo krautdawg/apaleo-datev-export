@@ -69,7 +69,7 @@ describe('VAT side in Gegenkonto', () => {
   it('takes the BU key from the VAT-side row', () => {
     // A 19 % revenue account on 8200 (no Automatik) with BU key 3: 11900 × 19 / 119 = 1900.
     const mapping = mappingWith(mappingRow({ apaleoAccount: '5919', apaleoType: 'Revenues', apaleoVatPercent: '19', datevAccount: '8200', buKey: '3' }));
-    const other = { number: '5919', name: 'Other Revenues 19%', type: 'Revenues', parentNumber: '5900' };
+    const other = { number: '5919', name: 'Other Revenues 19%', type: 'Revenues', parentNumber: 'RevenueOther' };
     const { booking, findings } = single(ledgerLine({ credit: other, grossCents: 11_900, taxes: tax(19, 1_900) }), mapping);
     expect(findings).toEqual([]);
     expect(booking).toMatchObject({ konto: '1410', gegenkonto: '8200', buKey: '3', side: 'S' });

@@ -5,7 +5,7 @@ Fabricated responses shaped exactly like the apaleo Swagger models. No real hote
 | File | Swagger model | What it holds |
 |---|---|---|
 | `properties/page-1.json` | PropertyListModel | `BSP` Hotel Beispiel (Europe/Berlin) and `HBW` Hotel Beispiel Wien. Page 2 is answered with 204. |
-| `accounts-schema.json` | ChartOfAccountsModel | Chart at depth 4: payments (cash, Visa, Mastercard), revenues per VAT rate (accommodation 7/19 %, food 7 %, beverages 19 %, archived other 0 %), VAT, VAT on liabilities, city tax 0 %, AR, house; `1200` in guest and external accounts, `3000` in guest and booking accounts. |
+| `accounts-schema.json` | ChartOfAccountsModel | Chart at depth 4: payments (cash, Visa, Mastercard), revenues per VAT rate under apaleo's standard groups `RevenueAccommodation` (7/19 %), `RevenueFoodAndBeverages` (food 7 %, beverages 19 %) and `RevenueOther` (archived 0 %), VAT, VAT on liabilities, city tax 0 %, AR, house; `1200` in guest and external accounts, `3000` in guest and booking accounts. |
 | `export-gross-daily/<day>.json` | ExportGrossTransactionListModel | The ledger of one business day (below). Days without a file are answered with 204. |
 | `aggregate-daily/<day>.json` | AggregateTransactionListModel | apaleo's daily totals for the same day in the shape of the real API (see `live/`): leaf global accounts (payment methods, revenue and VAT sub-accounts) and only the top-level parent of guest accounts (`1200`, `3000`); revenue and deposits net, VAT accounts with the taxes, everything else gross. |
 

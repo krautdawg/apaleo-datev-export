@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { ChartIndex } from '../../src/core/chart.js';
-import { accountLabel, commandLabel, paymentLabel, revenueLabel } from '../../src/posting/index.js';
+import { accountLabel, buchungstext, commandLabel, paymentLabel, revenueLabel } from '../../src/posting/index.js';
+import { lineRate } from '../../src/mapping/index.js';
 import { ledgerLine, tax } from '../helpers/ledger.js';
 import { mappingRow } from '../helpers/mapping.js';
 import { ACCOUNTS, CHART, mappingWith, post } from '../helpers/posting.js';
@@ -33,10 +34,27 @@ describe('Buchungstext', () => {
     expect(booking?.buchungstext).not.toContain('Müller');
   });
 
-  it('names revenue in German: "Erlös" plus the account, "Erlösminderung" for an allowance', () => {
+  it('names revenue in German: "Erlös" plus the standard group, "Erlösminderung" for an allowance', () => {
     const [charge, allowance] = post([ledgerLine(), ledgerLine({ grossCents: -1_000, taxes: [tax('Reduced', 7, -65)] })]).bookings;
-    expect(charge?.buchungstext).toBe('Erlös Accommodation 7%');
-    expect(allowance?.buchungstext).toBe('Erlösminderung Accommodation 7%');
+    expect(charge?.buchungstext).toBe('Erlös Logis 7 %');
+    expect(allowance?.buchungstext).toBe('Erlösminderung Logis 7 %');
+  });
+
+  it('names revenue by its economic sign on the debit side: negative is "Erlös", positive is "Erlösminderung"', () => {
+    const debited = (grossCents: number, amount: number) =>
+      ledgerLine({ debit: ACCOUNTS.accommodation7, credit: ACCOUNTS.receivables, grossCents, taxes: [tax('Reduced', 7, amount)] });
+    const [revenue, reduction] = post([debited(-1_000, -65), debited(1_000, 65)]).bookings;
+    expect(revenue?.buchungstext).toBe('Erlös Logis 7 %');
+    expect(reduction?.buchungstext).toBe('Erlösminderung Logis 7 %');
+  });
+
+  it('names city tax and levies in German, never as revenue, with the rate only when it is not 0', () => {
+    const levy = (type: string, grossCents = 500, rate = 0) =>
+      ledgerLine({ credit: { number: `${type}-1`, name: `${type} English name`, type }, grossCents, taxes: rate === 0 ? [] : [tax('Normal', rate, 80)] });
+    const texts = [levy('CityTaxes'), levy('SecondCityTax'), levy('GuestLevies'), levy('CityTaxes', -500), levy('GuestLevies', 500, 19)].map((line) =>
+      buchungstext(line, line.credit, CHART, lineRate(line) ?? 0),
+    );
+    expect(texts).toEqual(['Kurtaxe / City Tax', 'Kurtaxe / City Tax 2', 'Gästeabgabe', 'Korrektur Kurtaxe / City Tax', 'Gästeabgabe 19 %']);
   });
 
   it('names a deposit by side and sign, with its rate', () => {
@@ -52,7 +70,7 @@ describe('Buchungstext', () => {
     ]);
   });
 
-  it('names a payment refund "Erstattung", a debtor transfer "Forderung an Debitor" and other lines by command and account', () => {
+  it('names a payment refund "Erstattung", a debtor transfer "Forderung an Debitor" and city tax as "Kurtaxe / City Tax"', () => {
     const [refund, transfer, cityTax, move] = post([
       payment({ grossCents: -5_000 }),
       ledgerLine({ debit: ACCOUNTS.accountsReceivable, credit: ACCOUNTS.receivables, command: 'PostToAccountsReceivables', taxes: [] }),
@@ -61,16 +79,17 @@ describe('Buchungstext', () => {
     ]).bookings;
     expect(refund?.buchungstext).toBe('Erstattung Visa');
     expect(transfer?.buchungstext).toBe('Forderung an Debitor');
-    expect(cityTax?.buchungstext).toBe('Buchung City Tax 0%');
+    expect(cityTax?.buchungstext).toBe('Kurtaxe / City Tax');
     // Both sides map to 1410: skipped, so only three bookings.
     expect(move).toBeUndefined();
   });
 
   it('is cut to 60 characters', () => {
-    const credit = { ...ACCOUNTS.accommodation7, name: `Accommodation ${'x'.repeat(80)}` };
-    const text = post([ledgerLine({ credit })]).bookings[0]?.buchungstext ?? '';
+    const credit = { number: '5500', name: `Spa ${'x'.repeat(80)}`, type: 'Revenues' };
+    const mapping = mappingWith(mappingRow({ apaleoAccount: '5500', apaleoType: 'Revenues', datevAccount: '8300', datevVatPercent: '7' }));
+    const text = post([ledgerLine({ credit })], mapping).bookings[0]?.buchungstext ?? '';
     expect(text).toHaveLength(60);
-    expect(text.startsWith('Erlös Accommodation x')).toBe(true);
+    expect(text.startsWith('Erlös Spa x')).toBe(true);
   });
 
   it('labels the remaining apaleo commands in German', () => {

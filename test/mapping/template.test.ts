@@ -123,7 +123,7 @@ describe.each(SKRS)('SKR%s hotel template', (skr) => {
       ['LossOfAccountsReceivable', '19', loss.v19],
     ]);
     // Parents get no row; 3000 (guest and booking) has children of the same type.
-    for (const parent of ['1000', '1610', '5000', '5010', '5100', '3000']) expect(find(rows, parent)).toBeUndefined();
+    for (const parent of ['1000', '1610', '5000', 'RevenueAccommodation', 'RevenueFoodAndBeverages', '3000']) expect(find(rows, parent)).toBeUndefined();
   });
 });
 

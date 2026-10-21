@@ -3,8 +3,8 @@
     {
       "file": "EXTF_Buchungsstapel_1234567_42_20260901-20260930_BSP.csv",
       "status": "current",
-      "sha256": "90700c47e01362eefe07f94ec701e8da465024cb46193a3b9519413484158067",
-      "bodySha256": "a32645e773f4e85a63bef2cdf0ea72fdefe7222e0d6097ee842cb0e74470393a",
+      "sha256": "b1ddeef27da85b3fa9fe771aa51cbc53ae4d59c7c48d9c5e341b9ac96fa58b56",
+      "bodySha256": "2e538f4b25ece816191d82f8d39385a950e6f115d1c2c3c008887bddcb26fde5",
       "from": "2026-09-01",
       "to": "2026-09-30",
       "bookings": 22,

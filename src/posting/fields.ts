@@ -37,6 +37,16 @@ const REVENUE_GROUPS: Readonly<Record<string, string>> = {
   RevenueOther: 'Sonstige Erlöse',
 };
 
+/**
+ * apaleo's city tax and levy types: money the hotel collects for the
+ * municipality, not revenue, so no `Erlös` and no English account name.
+ */
+const LEVY_LABELS: Readonly<Record<string, string>> = {
+  CityTaxes: 'Kurtaxe / City Tax',
+  SecondCityTax: 'Kurtaxe / City Tax 2',
+  GuestLevies: 'Gästeabgabe',
+};
+
 /** apaleo's generic English payment-method names; card brands keep their name. */
 const PAYMENT_LABELS: Readonly<Record<string, string>> = {
   'Cash Payment': 'Bar',
@@ -108,7 +118,10 @@ export function paymentLabel(name: string): string {
  * The Buchungstext (s10 design decision 10), German only and cut to the 60
  * characters DATEV allows. It names the business case from the command, the
  * sign and the account types, then a German label:
- * - revenue: `Erlös` (credited, positive) or `Erlösminderung` + revenue label;
+ * - revenue: `Erlös` (credited and positive, or debited and negative) or
+ *   `Erlösminderung` + revenue label;
+ * - city tax and levies: `Kurtaxe / City Tax`, `Kurtaxe / City Tax 2` or
+ *   `Gästeabgabe` (`Korrektur ` before it when reduced), with the rate if not 0;
  * - deposits, by side and sign: `Anzahlung` (via a payment), `Umbuchung
  *   Anzahlung` (from a folio), `Auflösung Anzahlung` (against a folio),
  *   `Erstattung Anzahlung` (paid back), each with the deposit's VAT rate;
@@ -126,7 +139,12 @@ function businessText(line: LedgerLine, labelled: AccountRef, chart: ChartIndex,
     line.credit.type === type ? { ref: line.credit, credited: true } : line.debit.type === type ? { ref: line.debit, credited: false } : undefined;
   const positive = line.grossCents > 0;
   const revenue = side('Revenues');
-  if (revenue) return `${revenue.credited && positive ? 'Erlös' : 'Erlösminderung'} ${revenueLabel(revenue.ref, chart, rate)}`;
+  if (revenue) return `${revenue.credited === positive ? 'Erlös' : 'Erlösminderung'} ${revenueLabel(revenue.ref, chart, rate)}`;
+  const levy = Object.keys(LEVY_LABELS).map(side).find((found) => found !== undefined);
+  if (levy) {
+    const label = `${LEVY_LABELS[levy.ref.type] ?? ''}${rate === 0 ? '' : ` ${rate} %`}`;
+    return levy.credited === positive ? label : `Korrektur ${label}`;
+  }
   const deposit = depositMovement(line);
   if (deposit) {
     const label = deposit.direction === 'increase'
