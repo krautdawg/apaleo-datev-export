@@ -378,6 +378,32 @@ describe('checkCoverage', () => {
       expect(findings[0]?.message).not.toContain('fill in');
     });
 
+    it('names the empty 2020 wildcard row of a v1 mapping after --update instead of asking to add it', () => {
+      const mapping = mappingOf([
+        ...base,
+        mappingRow({ apaleoAccount: '3000', apaleoType: 'Liabilities', apaleoName: 'Liabilities' }),
+        mappingRow({ apaleoAccount: '*', apaleoType: 'Liabilities', apaleoVatPercent: '16' }),
+      ]);
+      const ledger = [ledgerLine({ debit: receivables, credit: { ...deposit('A-1'), number: 'A-1_Liabilities/Normal:16.00' }, grossCents: -1160, taxes: [tax('Normal', 16, -160)] })];
+      const [finding, ...rest] = coverage(mapping, ledger, chart, { skr: '03' });
+      expect(rest).toEqual([]);
+      expect(finding?.message).toContain(
+        'the parent row for 3000 on line 4 has no DATEV account and does not apply to Liabilities at different VAT rates; ' +
+          'the wildcard row for Liabilities at 16 % on line 5 is empty on purpose: 16 % applied only from 1 July to 31 December 2020',
+      );
+      expect(finding?.message).not.toContain('add a wildcard row');
+    });
+
+    it('asks to fill in an empty wildcard row at a current rate that the empty parent row hides', () => {
+      const mapping = mappingOf([
+        ...base,
+        mappingRow({ apaleoAccount: '3000', apaleoType: 'Liabilities', apaleoName: 'Liabilities' }),
+        mappingRow({ apaleoAccount: '*', apaleoType: 'Liabilities', apaleoVatPercent: '7' }),
+      ]);
+      const ledger = [ledgerLine({ debit: receivables, credit: deposit('A-1'), grossCents: -1000, taxes: [tax('Reduced', 7, -65)] })];
+      expect(coverage(mapping, ledger, chart, { skr: '03' })[0]?.message).toMatch(/; fill in datev_account on the wildcard row for Liabilities at 7 % on line 5$/);
+    });
+
     it('suggests the same wildcard row when there is no parent row at all, and the account only without an SKR', () => {
       const ledger = [ledgerLine({ debit: receivables, credit: deposit('A-1'), grossCents: -1000, taxes: [tax('Reduced', 7, -65)] })];
       expect(coverage(mappingOf(base), ledger, chart, { skr: '04' })[0]?.message).toMatch(/: add a wildcard row `\*;Liabilities;;7;<DATEV account>;;7` \(template: 3260\)$/);

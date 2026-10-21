@@ -83,6 +83,10 @@ The tool SHALL refuse to produce a DATEV file when any account booked in the per
 - **WHEN** the mapping has the empty row `3000;Liabilities` on line 67 and no Liabilities wildcards, and the period books five per-reservation Liabilities accounts at 7 %
 - **THEN** one `E-UNMAPPED` finding names parent `3000`, line 67, five accounts with up to three examples, and the fix "add a wildcard row `*;Liabilities;;7;<DATEV account>;;7` (template: 1711)", and it does not ask to fill in line 67
 
+#### Scenario: Deposits at a 2020 rate under an empty parent after --update
+- **WHEN** a v1 mapping keeps the empty row `3000;Liabilities`, `init-mapping --update` has appended the empty row `*;Liabilities;;16`, and the period books a per-reservation Liabilities account at 16 %
+- **THEN** the `E-UNMAPPED` finding names the existing wildcard row by its line, says it is empty on purpose because 16 % applied only from 1 July to 31 December 2020, and does not ask to add a wildcard row
+
 #### Scenario: Accounts receivable without a row
 - **WHEN** the mapping has neither a `9999` row nor an AccountsReceivable wildcard and the period books `ZAQSEFYC-1_AccountsReceivable` and its `/Offset`
 - **THEN** one `E-UNMAPPED` finding names parent `9999` (AccountsReceivable) with both accounts and suggests a `9999` row or `*;AccountsReceivable;;;10000` (collective debtor)
