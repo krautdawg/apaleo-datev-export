@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { ChartIndex } from '../../src/core/chart.js';
 import { accountLabel, commandLabel } from '../../src/posting/index.js';
-import { ledgerLine } from '../helpers/ledger.js';
+import { ledgerLine, tax } from '../helpers/ledger.js';
 import { mappingRow } from '../helpers/mapping.js';
 import { ACCOUNTS, CHART, mappingWith, post } from '../helpers/posting.js';
 
@@ -45,7 +45,7 @@ describe('Buchungstext', () => {
   });
 
   it('does not repeat the command label: a prepayment on a guest deposit is "Anzahlung Gast"', () => {
-    const line = ledgerLine({ debit: ACCOUNTS.visa, credit: ACCOUNTS.liabilities, command: 'PostPrepayment', grossCents: 20_000, taxes: [{ vatType: 'Reduced', percent: 7, amountCents: 1_308 }] });
+    const line = ledgerLine({ debit: ACCOUNTS.visa, credit: ACCOUNTS.liabilities, command: 'PostPrepayment', grossCents: 20_000, taxes: [tax('Reduced', 7, 1_308)] });
     expect(post([line]).bookings[0]?.buchungstext).toBe('Anzahlung Gast');
   });
 
@@ -87,7 +87,7 @@ describe('accountLabel', () => {
 describe('KOST1 and KOST2', () => {
   it('come from the VAT-side row first', () => {
     // The fixture maps drinks 5121 to 8400 with KOST1 BAR.
-    const [booking] = post([ledgerLine({ credit: ACCOUNTS.beverages19, grossCents: 2_380, taxes: [{ vatType: 'Normal', percent: 19, amountCents: 380 }] })]).bookings;
+    const [booking] = post([ledgerLine({ credit: ACCOUNTS.beverages19, grossCents: 2_380, taxes: [tax('Normal', 19, 380)] })]).bookings;
     expect(booking).toMatchObject({ kost1: 'BAR' });
     expect(booking?.kost2).toBeUndefined();
   });
@@ -98,7 +98,7 @@ describe('KOST1 and KOST2', () => {
       mappingRow({ apaleoAccount: '*', apaleoType: 'Receivables', datevAccount: '1410', kost1: 'LOGIS', kost2: 'X' }),
       mappingRow({ apaleoAccount: '1611', apaleoType: 'Payments', datevAccount: '1360', kost1: 'KARTE' }),
     );
-    const drinks = ledgerLine({ credit: ACCOUNTS.beverages19, grossCents: 2_380, taxes: [{ vatType: 'Normal', percent: 19, amountCents: 380 }] });
+    const drinks = ledgerLine({ credit: ACCOUNTS.beverages19, grossCents: 2_380, taxes: [tax('Normal', 19, 380)] });
     const [charge, card] = post([drinks, payment()], mapping).bookings;
     expect(charge).toMatchObject({ kost1: 'LOGIS', kost2: 'FB' });
     expect(card).toMatchObject({ kost1: 'KARTE', kost2: 'X' });

@@ -3,7 +3,7 @@ import { ChartIndex } from '../../src/core/chart.js';
 import { isErrorFinding } from '../../src/core/findings.js';
 import type { LedgerLine } from '../../src/core/source.js';
 import { buildBookings, inferReleaseRates } from '../../src/posting/index.js';
-import { ledgerLine } from '../helpers/ledger.js';
+import { ledgerLine, tax } from '../helpers/ledger.js';
 import { mappingRow } from '../helpers/mapping.js';
 import { ACCOUNTS, CHART, LEDGER, OPTIONS, SKR03_MAPPING, mappingWith, post } from '../helpers/posting.js';
 
@@ -42,7 +42,7 @@ function pair(overrides: Partial<LedgerLine> = {}): LedgerLine {
     command: 'PostPrepaymentVat',
     grossCents: 981,
     netCents: 0,
-    taxes: [{ vatType: 'Reduced', percent: 7, amountCents: 981 }],
+    taxes: [tax('Reduced', 7, 981)],
     sourceEntryNumber: 'BSPE0022',
     ...overrides,
   });
@@ -51,7 +51,7 @@ function pair(overrides: Partial<LedgerLine> = {}): LedgerLine {
 describe('deposit release with taxes', () => {
   it('resolves to the 7 % Liabilities row and books 1410 against 1711, side H, without a finding', () => {
     // 2026-09-21 fixture: release 200.00 with taxes 13.08 at 7 %; 20000 × 7 / 107 = 1308.4 → 13.08.
-    const line = release({ grossCents: 20_000, netCents: 18_692, taxes: [{ vatType: 'Reduced', percent: 7, amountCents: 1_308 }] });
+    const line = release({ grossCents: 20_000, netCents: 18_692, taxes: [tax('Reduced', 7, 1_308)] });
     const { bookings, findings, summary } = post([line]);
     expect(findings).toEqual([]);
     expect(bookings).toEqual([expect.objectContaining({ amountCents: 20_000, konto: '1410', gegenkonto: '1711', side: 'H' })]);
@@ -90,14 +90,14 @@ describe('deposit release without taxes', () => {
   });
 
   it('blocks a release whose DATEV VAT differs from the pair by more than a cent with E-VAT-AMOUNT', () => {
-    const { bookings, findings } = post([release(), pair({ grossCents: 900, taxes: [{ vatType: 'Reduced', percent: 7, amountCents: 900 }] })]);
+    const { bookings, findings } = post([release(), pair({ grossCents: 900, taxes: [tax('Reduced', 7, 900)] })]);
     expect(bookings).toEqual([]);
     expect(codes(findings)).toEqual(['E-VAT-AMOUNT']);
     expect(findings[0]?.message).toContain('DATEV will compute 9.81 VAT on the deposit release, but apaleo reversed 9.00 on the PostPrepaymentVat line BSPE0022');
   });
 
   it('warns once with W-VAT-ROUNDING when the pair is one cent off', () => {
-    const { bookings, findings, summary, vatRoundingByRate } = post([release(), pair({ grossCents: 982, taxes: [{ vatType: 'Reduced', percent: 7, amountCents: 982 }] })]);
+    const { bookings, findings, summary, vatRoundingByRate } = post([release(), pair({ grossCents: 982, taxes: [tax('Reduced', 7, 982)] })]);
     expect(bookings).toHaveLength(1);
     expect(codes(findings)).toEqual(['W-VAT-ROUNDING']);
     expect([...vatRoundingByRate]).toEqual([[7, 1]]);
@@ -133,7 +133,7 @@ describe('deposit release without taxes', () => {
   });
 
   it('blocks a release whose pair lines carry two rates with E-VAT-RATE-UNKNOWN', () => {
-    const nineteen = pair({ debit: { number: '2119', name: 'VAT on Liabilities 19%', type: 'VatOnLiabilities' }, taxes: [{ vatType: 'Normal', percent: 19, amountCents: 100 }], sourceEntryNumber: 'BSPE0024' });
+    const nineteen = pair({ debit: { number: '2119', name: 'VAT on Liabilities 19%', type: 'VatOnLiabilities' }, taxes: [tax('Normal', 19, 100)], sourceEntryNumber: 'BSPE0024' });
     const { findings } = post([release(), pair(), nineteen]);
     expect(codes(findings)).toEqual(['E-VAT-RATE-UNKNOWN']);
     expect(findings[0]?.message).toContain('carry more than one rate (7 %, 19 %)');
@@ -172,7 +172,7 @@ describe('untaxed deposit lines other than releases', () => {
     release({ debit: ACCOUNTS.visa, credit: liabilities, command: 'PostPrepayment', grossCents: 10_000, netCents: 10_000, sourceEntryNumber: 'BSPE0032', ...overrides });
   /** VAT reversed on the deposit (debit VAT on liabilities), as for a release. */
   const reversing = (overrides: Partial<LedgerLine> = {}) =>
-    pair({ grossCents: 654, taxes: [{ vatType: 'Reduced', percent: 7, amountCents: 654 }], sourceEntryNumber: 'BSPE0033', ...overrides });
+    pair({ grossCents: 654, taxes: [tax('Reduced', 7, 654)], sourceEntryNumber: 'BSPE0033', ...overrides });
   /** VAT booked on the deposit (credit VAT on liabilities), as on receipt. */
   const booking = (overrides: Partial<LedgerLine> = {}) =>
     reversing({ debit: liabilities, credit: ACCOUNTS.vatOnLiabilities7, sourceEntryNumber: 'BSPE0034', ...overrides });
@@ -197,14 +197,14 @@ describe('untaxed deposit lines other than releases', () => {
   });
 
   it('blocks a refund whose DATEV VAT differs from the pair with E-VAT-AMOUNT', () => {
-    const { bookings, findings } = post([refund(), reversing({ grossCents: 600, taxes: [{ vatType: 'Reduced', percent: 7, amountCents: 600 }] })]);
+    const { bookings, findings } = post([refund(), reversing({ grossCents: 600, taxes: [tax('Reduced', 7, 600)] })]);
     expect(bookings).toEqual([]);
     expect(codes(findings)).toEqual(['E-VAT-AMOUNT']);
     expect(findings[0]?.message).toContain('DATEV will compute 6.54 VAT on the deposit line, but apaleo reversed 6.00 on the PostPrepaymentVat line BSPE0033');
   });
 
   it('blocks a prepayment received whose DATEV VAT differs from the pair with E-VAT-AMOUNT', () => {
-    const { findings } = post([received(), booking({ grossCents: 600, taxes: [{ vatType: 'Reduced', percent: 7, amountCents: 600 }] })]);
+    const { findings } = post([received(), booking({ grossCents: 600, taxes: [tax('Reduced', 7, 600)] })]);
     expect(codes(findings)).toEqual(['E-VAT-AMOUNT']);
     expect(findings[0]?.message).toContain('but apaleo booked 6.00 on the PostPrepaymentVat line BSPE0034');
   });
@@ -228,13 +228,13 @@ describe('untaxed deposit lines other than releases', () => {
 
   it('checks a release and a refund of the same day and reference against their pair together', () => {
     // 150.00 released (9.81) + 100.00 refunded (6.54) = 16.35 reversed on one pair line.
-    const { bookings, findings } = post([release(), refund(), reversing({ grossCents: 1_635, taxes: [{ vatType: 'Reduced', percent: 7, amountCents: 1_635 }] })]);
+    const { bookings, findings } = post([release(), refund(), reversing({ grossCents: 1_635, taxes: [tax('Reduced', 7, 1_635)] })]);
     expect(findings).toEqual([]);
     expect(bookings.map((b) => b.gegenkonto)).toEqual(['1711', '1711']);
   });
 
   it('blocks a refund whose pair lines carry two rates with E-VAT-RATE-UNKNOWN', () => {
-    const nineteen = reversing({ debit: { number: '2119', name: 'VAT on Liabilities 19%', type: 'VatOnLiabilities' }, taxes: [{ vatType: 'Normal', percent: 19, amountCents: 100 }], sourceEntryNumber: 'BSPE0035' });
+    const nineteen = reversing({ debit: { number: '2119', name: 'VAT on Liabilities 19%', type: 'VatOnLiabilities' }, taxes: [tax('Normal', 19, 100)], sourceEntryNumber: 'BSPE0035' });
     const { bookings, findings } = post([refund(), reversing(), nineteen]);
     expect(bookings).toEqual([]);
     expect(codes(findings)).toEqual(['E-VAT-RATE-UNKNOWN']);

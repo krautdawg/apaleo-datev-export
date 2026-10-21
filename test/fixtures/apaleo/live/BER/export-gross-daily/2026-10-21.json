@@ -1,0 +1,1089 @@
+{
+  "transactions": [
+    {
+      "timestamp": "2026-10-21T11:46:58Z",
+      "date": "2026-10-21",
+      "debitedAccount": {
+        "name": "Cash Payment",
+        "number": "1600",
+        "parentNumber": "1000",
+        "type": "Payments"
+      },
+      "creditedAccount": {
+        "name": "Receivables for Folio BER-EXT-1 (Offset)",
+        "number": "BER-EXT-1_Receivables/Offset",
+        "parentNumber": "1200",
+        "type": "Receivables"
+      },
+      "command": "PostPayment",
+      "currency": "EUR",
+      "grossAmount": 61.7,
+      "netAmount": 61.7,
+      "receipt": {
+        "type": "Custom",
+        "number": "BON-BER-1"
+      },
+      "sourceEntryNumber": "000000033",
+      "reference": "BER-EXT-1",
+      "referenceType": "External"
+    },
+    {
+      "timestamp": "2026-10-21T11:46:58Z",
+      "date": "2026-10-21",
+      "debitedAccount": {
+        "name": "Receivables for Folio BER-EXT-1",
+        "number": "BER-EXT-1_Receivables",
+        "parentNumber": "1200",
+        "type": "Receivables"
+      },
+      "creditedAccount": {
+        "name": "Receivables for Folio BER-EXT-1 (Offset)",
+        "number": "BER-EXT-1_Receivables/Offset",
+        "parentNumber": "1200",
+        "type": "Receivables"
+      },
+      "command": "PostPayment",
+      "currency": "EUR",
+      "grossAmount": -61.7,
+      "netAmount": -61.7,
+      "receipt": {
+        "type": "Custom",
+        "number": "BON-BER-1"
+      },
+      "sourceEntryNumber": "000000033",
+      "reference": "BER-EXT-1",
+      "referenceType": "External"
+    },
+    {
+      "timestamp": "2026-10-21T11:46:57Z",
+      "date": "2026-10-21",
+      "debitedAccount": {
+        "name": "Receivables for Folio BER-EXT-1",
+        "number": "BER-EXT-1_Receivables",
+        "parentNumber": "1200",
+        "type": "Receivables"
+      },
+      "creditedAccount": {
+        "name": "Revenues Food and beverages (19%)",
+        "number": "RevenueFoodAndBeverages_Normal:19.00",
+        "parentNumber": "5000",
+        "type": "Revenues"
+      },
+      "command": "PostCharge",
+      "currency": "EUR",
+      "grossAmount": 14.9,
+      "netAmount": 12.5210084,
+      "taxes": [
+        {
+          "type": "Normal",
+          "percent": 19,
+          "amount": 2.3789916
+        }
+      ],
+      "receipt": {
+        "type": "Custom",
+        "number": "BON-BER-1"
+      },
+      "sourceEntryNumber": "000000032",
+      "reference": "BER-EXT-1",
+      "referenceType": "External"
+    },
+    {
+      "timestamp": "2026-10-21T11:46:57Z",
+      "date": "2026-10-21",
+      "debitedAccount": {
+        "name": "Receivables for Folio BER-EXT-1",
+        "number": "BER-EXT-1_Receivables",
+        "parentNumber": "1200",
+        "type": "Receivables"
+      },
+      "creditedAccount": {
+        "name": "Revenues Food and beverages (7%)",
+        "number": "RevenueFoodAndBeverages_Reduced:7.00",
+        "parentNumber": "5000",
+        "type": "Revenues"
+      },
+      "command": "PostCharge",
+      "currency": "EUR",
+      "grossAmount": 46.8,
+      "netAmount": 43.73831776,
+      "taxes": [
+        {
+          "type": "Reduced",
+          "percent": 7,
+          "amount": 3.06168224
+        }
+      ],
+      "receipt": {
+        "type": "Custom",
+        "number": "BON-BER-1"
+      },
+      "sourceEntryNumber": "000000031",
+      "reference": "BER-EXT-1",
+      "referenceType": "External"
+    },
+    {
+      "timestamp": "2026-10-21T11:45:54Z",
+      "date": "2026-10-21",
+      "debitedAccount": {
+        "name": "Receivables for Reservation ZAQSEFYC-1",
+        "number": "ZAQSEFYC-1_Receivables",
+        "parentNumber": "1200",
+        "type": "Receivables"
+      },
+      "creditedAccount": {
+        "name": "AccountsReceivable for Reservation ZAQSEFYC-1 (Offset)",
+        "number": "ZAQSEFYC-1_AccountsReceivable/Offset",
+        "parentNumber": "9999",
+        "type": "AccountsReceivable"
+      },
+      "command": "PostToAccountsReceivables",
+      "currency": "EUR",
+      "grossAmount": -114,
+      "netAmount": -114,
+      "receipt": {
+        "type": "Invoice",
+        "number": "20261000000001"
+      },
+      "sourceEntryNumber": "000000030",
+      "reference": "ZAQSEFYC-1",
+      "referenceType": "Guest"
+    },
+    {
+      "timestamp": "2026-10-21T11:45:54Z",
+      "date": "2026-10-21",
+      "debitedAccount": {
+        "name": "AccountsReceivable for Reservation ZAQSEFYC-1",
+        "number": "ZAQSEFYC-1_AccountsReceivable",
+        "parentNumber": "9999",
+        "type": "AccountsReceivable"
+      },
+      "creditedAccount": {
+        "name": "AccountsReceivable for Reservation ZAQSEFYC-1 (Offset)",
+        "number": "ZAQSEFYC-1_AccountsReceivable/Offset",
+        "parentNumber": "9999",
+        "type": "AccountsReceivable"
+      },
+      "command": "PostToAccountsReceivables",
+      "currency": "EUR",
+      "grossAmount": 114,
+      "netAmount": 114,
+      "receipt": {
+        "type": "Invoice",
+        "number": "20261000000001"
+      },
+      "sourceEntryNumber": "000000030",
+      "reference": "ZAQSEFYC-1",
+      "referenceType": "Guest"
+    },
+    {
+      "timestamp": "2026-10-21T11:45:52Z",
+      "date": "2026-10-21",
+      "debitedAccount": {
+        "name": "Receivables for Reservation ZAQSEFYC-1",
+        "number": "ZAQSEFYC-1_Receivables",
+        "parentNumber": "1200",
+        "type": "Receivables"
+      },
+      "creditedAccount": {
+        "name": "Revenues Accommodation (7%)",
+        "number": "RevenueAccommodation_Reduced:7.00",
+        "parentNumber": "5000",
+        "type": "Revenues"
+      },
+      "command": "PostCharge",
+      "currency": "EUR",
+      "grossAmount": 114,
+      "netAmount": 106.54205607,
+      "taxes": [
+        {
+          "type": "Reduced",
+          "percent": 7,
+          "amount": 7.45794393
+        }
+      ],
+      "receipt": {
+        "type": "Reservation",
+        "number": "ZAQSEFYC-1-V0"
+      },
+      "sourceEntryNumber": "000000029",
+      "reference": "ZAQSEFYC-1",
+      "referenceType": "Guest"
+    },
+    {
+      "timestamp": "2026-10-21T11:45:48Z",
+      "date": "2026-10-21",
+      "debitedAccount": {
+        "name": "GiroCard Payment",
+        "number": "1107",
+        "parentNumber": "1000",
+        "type": "Payments"
+      },
+      "creditedAccount": {
+        "name": "Liabilities for Reservation EPEBVUIU-1 (0%)",
+        "number": "EPEBVUIU-1_Liabilities/Null:0.00",
+        "parentNumber": "3000",
+        "type": "Liabilities"
+      },
+      "command": "PostPrepayment",
+      "currency": "EUR",
+      "grossAmount": -10,
+      "netAmount": -10,
+      "receipt": {
+        "type": "Custom",
+        "number": "REF-BER-R6"
+      },
+      "sourceEntryNumber": "000000028",
+      "reference": "EPEBVUIU-1",
+      "referenceType": "Guest"
+    },
+    {
+      "timestamp": "2026-10-21T11:45:47Z",
+      "date": "2026-10-21",
+      "debitedAccount": {
+        "name": "Receivables for Reservation EPEBVUIU-1",
+        "number": "EPEBVUIU-1_Receivables",
+        "parentNumber": "1200",
+        "type": "Receivables"
+      },
+      "creditedAccount": {
+        "name": "Liabilities for Reservation EPEBVUIU-1 (0%)",
+        "number": "EPEBVUIU-1_Liabilities/Null:0.00",
+        "parentNumber": "3000",
+        "type": "Liabilities"
+      },
+      "command": "PostCharge",
+      "currency": "EUR",
+      "grossAmount": 10,
+      "netAmount": 10,
+      "receipt": {
+        "type": "Reservation",
+        "number": "EPEBVUIU-1-V0"
+      },
+      "sourceEntryNumber": "000000027",
+      "reference": "EPEBVUIU-1",
+      "referenceType": "Guest"
+    },
+    {
+      "timestamp": "2026-10-21T11:45:47Z",
+      "date": "2026-10-21",
+      "debitedAccount": {
+        "name": "Receivables for Reservation EPEBVUIU-1",
+        "number": "EPEBVUIU-1_Receivables",
+        "parentNumber": "1200",
+        "type": "Receivables"
+      },
+      "creditedAccount": {
+        "name": "Revenues Accommodation (7%)",
+        "number": "RevenueAccommodation_Reduced:7.00",
+        "parentNumber": "5000",
+        "type": "Revenues"
+      },
+      "command": "PostCharge",
+      "currency": "EUR",
+      "grossAmount": -10,
+      "netAmount": -9.34579439,
+      "taxes": [
+        {
+          "type": "Reduced",
+          "percent": 7,
+          "amount": -0.65420561
+        }
+      ],
+      "receipt": {
+        "type": "Reservation",
+        "number": "EPEBVUIU-1-V0"
+      },
+      "sourceEntryNumber": "000000026",
+      "reference": "EPEBVUIU-1",
+      "referenceType": "Guest"
+    },
+    {
+      "timestamp": "2026-10-21T11:45:47Z",
+      "date": "2026-10-21",
+      "debitedAccount": {
+        "name": "Receivables for Reservation EPEBVUIU-1",
+        "number": "EPEBVUIU-1_Receivables",
+        "parentNumber": "1200",
+        "type": "Receivables"
+      },
+      "creditedAccount": {
+        "name": "Liabilities for Reservation EPEBVUIU-1 (7%)",
+        "number": "EPEBVUIU-1_Liabilities/Reduced:7.00",
+        "parentNumber": "3000",
+        "type": "Liabilities"
+      },
+      "command": "PostCharge",
+      "currency": "EUR",
+      "grossAmount": -124,
+      "netAmount": -115.88785047,
+      "taxes": [
+        {
+          "type": "Reduced",
+          "percent": 7,
+          "amount": -8.11214953
+        }
+      ],
+      "receipt": {
+        "type": "Reservation",
+        "number": "EPEBVUIU-1-V0"
+      },
+      "sourceEntryNumber": "000000025",
+      "reference": "EPEBVUIU-1",
+      "referenceType": "Guest"
+    },
+    {
+      "timestamp": "2026-10-21T11:45:47Z",
+      "date": "2026-10-21",
+      "debitedAccount": {
+        "name": "Receivables for Reservation EPEBVUIU-1",
+        "number": "EPEBVUIU-1_Receivables",
+        "parentNumber": "1200",
+        "type": "Receivables"
+      },
+      "creditedAccount": {
+        "name": "Revenues Accommodation (7%)",
+        "number": "RevenueAccommodation_Reduced:7.00",
+        "parentNumber": "5000",
+        "type": "Revenues"
+      },
+      "command": "PostCharge",
+      "currency": "EUR",
+      "grossAmount": 124,
+      "netAmount": 115.88785047,
+      "taxes": [
+        {
+          "type": "Reduced",
+          "percent": 7,
+          "amount": 8.11214953
+        }
+      ],
+      "receipt": {
+        "type": "Reservation",
+        "number": "EPEBVUIU-1-V0"
+      },
+      "sourceEntryNumber": "000000024",
+      "reference": "EPEBVUIU-1",
+      "referenceType": "Guest"
+    },
+    {
+      "timestamp": "2026-10-21T11:45:46Z",
+      "date": "2026-10-21",
+      "debitedAccount": {
+        "name": "GiroCard Payment",
+        "number": "1107",
+        "parentNumber": "1000",
+        "type": "Payments"
+      },
+      "creditedAccount": {
+        "name": "Liabilities for Reservation EPEBVUIU-1 (7%)",
+        "number": "EPEBVUIU-1_Liabilities/Reduced:7.00",
+        "parentNumber": "3000",
+        "type": "Liabilities"
+      },
+      "command": "PostPrepayment",
+      "currency": "EUR",
+      "grossAmount": 124,
+      "netAmount": 115.88785047,
+      "taxes": [
+        {
+          "type": "Reduced",
+          "percent": 7,
+          "amount": 8.11214953
+        }
+      ],
+      "receipt": {
+        "type": "Custom",
+        "number": "EC-BER-R6"
+      },
+      "sourceEntryNumber": "000000023",
+      "reference": "EPEBVUIU-1",
+      "referenceType": "Guest"
+    },
+    {
+      "timestamp": "2026-10-21T11:45:46Z",
+      "date": "2026-10-21",
+      "debitedAccount": {
+        "name": "GiroCard Payment",
+        "number": "1107",
+        "parentNumber": "1000",
+        "type": "Payments"
+      },
+      "creditedAccount": {
+        "name": "Receivables for Reservation EPEBVUIU-1 (Offset)",
+        "number": "EPEBVUIU-1_Receivables/Offset",
+        "parentNumber": "1200",
+        "type": "Receivables"
+      },
+      "command": "PostPayment",
+      "currency": "EUR",
+      "grossAmount": 0.9,
+      "netAmount": 0.9,
+      "receipt": {
+        "type": "Custom",
+        "number": "EC-BER-R6"
+      },
+      "sourceEntryNumber": "000000022",
+      "reference": "EPEBVUIU-1",
+      "referenceType": "Guest"
+    },
+    {
+      "timestamp": "2026-10-21T11:45:46Z",
+      "date": "2026-10-21",
+      "debitedAccount": {
+        "name": "Receivables for Reservation EPEBVUIU-1",
+        "number": "EPEBVUIU-1_Receivables",
+        "parentNumber": "1200",
+        "type": "Receivables"
+      },
+      "creditedAccount": {
+        "name": "Receivables for Reservation EPEBVUIU-1 (Offset)",
+        "number": "EPEBVUIU-1_Receivables/Offset",
+        "parentNumber": "1200",
+        "type": "Receivables"
+      },
+      "command": "PostPayment",
+      "currency": "EUR",
+      "grossAmount": -0.9,
+      "netAmount": -0.9,
+      "receipt": {
+        "type": "Custom",
+        "number": "EC-BER-R6"
+      },
+      "sourceEntryNumber": "000000022",
+      "reference": "EPEBVUIU-1",
+      "referenceType": "Guest"
+    },
+    {
+      "timestamp": "2026-10-21T11:45:45Z",
+      "date": "2026-10-21",
+      "debitedAccount": {
+        "name": "Visa Debit Card Payment",
+        "number": "1103",
+        "parentNumber": "1000",
+        "type": "Payments"
+      },
+      "creditedAccount": {
+        "name": "Receivables for Reservation MZXIENAH-1 (Offset)",
+        "number": "MZXIENAH-1_Receivables/Offset",
+        "parentNumber": "1200",
+        "type": "Receivables"
+      },
+      "command": "PostPayment",
+      "currency": "EUR",
+      "grossAmount": 60,
+      "netAmount": 60,
+      "receipt": {
+        "type": "Custom",
+        "number": "NS-BER-R5"
+      },
+      "sourceEntryNumber": "000000021",
+      "reference": "MZXIENAH-1",
+      "referenceType": "Guest"
+    },
+    {
+      "timestamp": "2026-10-21T11:45:45Z",
+      "date": "2026-10-21",
+      "debitedAccount": {
+        "name": "Receivables for Reservation MZXIENAH-1",
+        "number": "MZXIENAH-1_Receivables",
+        "parentNumber": "1200",
+        "type": "Receivables"
+      },
+      "creditedAccount": {
+        "name": "Receivables for Reservation MZXIENAH-1 (Offset)",
+        "number": "MZXIENAH-1_Receivables/Offset",
+        "parentNumber": "1200",
+        "type": "Receivables"
+      },
+      "command": "PostPayment",
+      "currency": "EUR",
+      "grossAmount": -60,
+      "netAmount": -60,
+      "receipt": {
+        "type": "Custom",
+        "number": "NS-BER-R5"
+      },
+      "sourceEntryNumber": "000000021",
+      "reference": "MZXIENAH-1",
+      "referenceType": "Guest"
+    },
+    {
+      "timestamp": "2026-10-21T11:45:43Z",
+      "date": "2026-10-21",
+      "debitedAccount": {
+        "name": "Receivables for Reservation MZXIENAH-1",
+        "number": "MZXIENAH-1_Receivables",
+        "parentNumber": "1200",
+        "type": "Receivables"
+      },
+      "creditedAccount": {
+        "name": "Revenues No-show (7%)",
+        "number": "RevenueNoShow_Reduced:7.00",
+        "parentNumber": "5000",
+        "type": "Revenues"
+      },
+      "command": "PostCharge",
+      "currency": "EUR",
+      "grossAmount": 60,
+      "netAmount": 56.07476636,
+      "taxes": [
+        {
+          "type": "Reduced",
+          "percent": 7,
+          "amount": 3.92523364
+        }
+      ],
+      "receipt": {
+        "type": "Reservation",
+        "number": "MZXIENAH-1-V0"
+      },
+      "sourceEntryNumber": "000000020",
+      "reference": "MZXIENAH-1",
+      "referenceType": "Guest"
+    },
+    {
+      "timestamp": "2026-10-21T11:45:41Z",
+      "date": "2026-10-21",
+      "debitedAccount": {
+        "name": "Receivables for Reservation MXETGHPM-1",
+        "number": "MXETGHPM-1_Receivables",
+        "parentNumber": "1200",
+        "type": "Receivables"
+      },
+      "creditedAccount": {
+        "name": "Liabilities for Reservation MXETGHPM-1 (7%)",
+        "number": "MXETGHPM-1_Liabilities/Reduced:7.00",
+        "parentNumber": "3000",
+        "type": "Liabilities"
+      },
+      "command": "PostCharge",
+      "currency": "EUR",
+      "grossAmount": -114.02,
+      "netAmount": -106.56074766,
+      "taxes": [
+        {
+          "type": "Reduced",
+          "percent": 7,
+          "amount": -7.45925234
+        }
+      ],
+      "receipt": {
+        "type": "Reservation",
+        "number": "MXETGHPM-1-V0"
+      },
+      "sourceEntryNumber": "000000017",
+      "reference": "MXETGHPM-1",
+      "referenceType": "Guest"
+    },
+    {
+      "timestamp": "2026-10-21T11:45:41Z",
+      "date": "2026-10-21",
+      "debitedAccount": {
+        "name": "Receivables for Reservation MXETGHPM-1",
+        "number": "MXETGHPM-1_Receivables",
+        "parentNumber": "1200",
+        "type": "Receivables"
+      },
+      "creditedAccount": {
+        "name": "Liabilities for Reservation MXETGHPM-1 (19%)",
+        "number": "MXETGHPM-1_Liabilities/Normal:19.00",
+        "parentNumber": "3000",
+        "type": "Liabilities"
+      },
+      "command": "PostCharge",
+      "currency": "EUR",
+      "grossAmount": -19.98,
+      "netAmount": -16.78991597,
+      "taxes": [
+        {
+          "type": "Normal",
+          "percent": 19,
+          "amount": -3.19008403
+        }
+      ],
+      "receipt": {
+        "type": "Reservation",
+        "number": "MXETGHPM-1-V0"
+      },
+      "sourceEntryNumber": "000000016",
+      "reference": "MXETGHPM-1",
+      "referenceType": "Guest"
+    },
+    {
+      "timestamp": "2026-10-21T11:45:41Z",
+      "date": "2026-10-21",
+      "debitedAccount": {
+        "name": "Receivables for Reservation MXETGHPM-1",
+        "number": "MXETGHPM-1_Receivables",
+        "parentNumber": "1200",
+        "type": "Receivables"
+      },
+      "creditedAccount": {
+        "name": "Revenues Accommodation (7%)",
+        "number": "RevenueAccommodation_Reduced:7.00",
+        "parentNumber": "5000",
+        "type": "Revenues"
+      },
+      "command": "PostCharge",
+      "currency": "EUR",
+      "grossAmount": 114.02,
+      "netAmount": 106.56074766,
+      "taxes": [
+        {
+          "type": "Reduced",
+          "percent": 7,
+          "amount": 7.45925234
+        }
+      ],
+      "receipt": {
+        "type": "Reservation",
+        "number": "MXETGHPM-1-V0"
+      },
+      "sourceEntryNumber": "000000013",
+      "reference": "MXETGHPM-1",
+      "referenceType": "Guest"
+    },
+    {
+      "timestamp": "2026-10-21T11:45:41Z",
+      "date": "2026-10-21",
+      "debitedAccount": {
+        "name": "Receivables for Reservation MXETGHPM-1",
+        "number": "MXETGHPM-1_Receivables",
+        "parentNumber": "1200",
+        "type": "Receivables"
+      },
+      "creditedAccount": {
+        "name": "Revenues Food and beverages (19%)",
+        "number": "RevenueFoodAndBeverages_Normal:19.00",
+        "parentNumber": "5000",
+        "type": "Revenues"
+      },
+      "command": "PostCharge",
+      "currency": "EUR",
+      "grossAmount": 19.98,
+      "netAmount": 16.78991597,
+      "taxes": [
+        {
+          "type": "Normal",
+          "percent": 19,
+          "amount": 3.19008403
+        }
+      ],
+      "receipt": {
+        "type": "Reservation",
+        "number": "MXETGHPM-1-V0"
+      },
+      "sourceEntryNumber": "000000012",
+      "reference": "MXETGHPM-1",
+      "referenceType": "Guest"
+    },
+    {
+      "timestamp": "2026-10-21T11:45:40Z",
+      "date": "2026-10-21",
+      "debitedAccount": {
+        "name": "Amex Credit Card Payment",
+        "number": "1101",
+        "parentNumber": "1000",
+        "type": "Payments"
+      },
+      "creditedAccount": {
+        "name": "Liabilities for Reservation MXETGHPM-1 (7%)",
+        "number": "MXETGHPM-1_Liabilities/Reduced:7.00",
+        "parentNumber": "3000",
+        "type": "Liabilities"
+      },
+      "command": "PostPrepayment",
+      "currency": "EUR",
+      "grossAmount": 228.04,
+      "netAmount": 213.12149533,
+      "taxes": [
+        {
+          "type": "Reduced",
+          "percent": 7,
+          "amount": 14.91850467
+        }
+      ],
+      "receipt": {
+        "type": "Custom",
+        "number": "AMEX-BER-R2"
+      },
+      "sourceEntryNumber": "000000011",
+      "reference": "MXETGHPM-1",
+      "referenceType": "Guest"
+    },
+    {
+      "timestamp": "2026-10-21T11:45:40Z",
+      "date": "2026-10-21",
+      "debitedAccount": {
+        "name": "Amex Credit Card Payment",
+        "number": "1101",
+        "parentNumber": "1000",
+        "type": "Payments"
+      },
+      "creditedAccount": {
+        "name": "Liabilities for Reservation MXETGHPM-1 (19%)",
+        "number": "MXETGHPM-1_Liabilities/Normal:19.00",
+        "parentNumber": "3000",
+        "type": "Liabilities"
+      },
+      "command": "PostPrepayment",
+      "currency": "EUR",
+      "grossAmount": 39.96,
+      "netAmount": 33.57983193,
+      "taxes": [
+        {
+          "type": "Normal",
+          "percent": 19,
+          "amount": 6.38016807
+        }
+      ],
+      "receipt": {
+        "type": "Custom",
+        "number": "AMEX-BER-R2"
+      },
+      "sourceEntryNumber": "000000010",
+      "reference": "MXETGHPM-1",
+      "referenceType": "Guest"
+    },
+    {
+      "timestamp": "2026-10-21T11:45:39Z",
+      "date": "2026-10-21",
+      "debitedAccount": {
+        "name": "Receivables for Reservation LJJRUJKV-1",
+        "number": "LJJRUJKV-1_Receivables",
+        "parentNumber": "1200",
+        "type": "Receivables"
+      },
+      "creditedAccount": {
+        "name": "Liabilities for Reservation LJJRUJKV-1 (7%)",
+        "number": "LJJRUJKV-1_Liabilities/Reduced:7.00",
+        "parentNumber": "3000",
+        "type": "Liabilities"
+      },
+      "command": "PostCharge",
+      "currency": "EUR",
+      "grossAmount": -84,
+      "netAmount": -78.5046729,
+      "taxes": [
+        {
+          "type": "Reduced",
+          "percent": 7,
+          "amount": -5.4953271
+        }
+      ],
+      "receipt": {
+        "type": "Reservation",
+        "number": "LJJRUJKV-1-V0"
+      },
+      "sourceEntryNumber": "000000009",
+      "reference": "LJJRUJKV-1",
+      "referenceType": "Guest"
+    },
+    {
+      "timestamp": "2026-10-21T11:45:39Z",
+      "date": "2026-10-21",
+      "debitedAccount": {
+        "name": "Receivables for Reservation LJJRUJKV-1",
+        "number": "LJJRUJKV-1_Receivables",
+        "parentNumber": "1200",
+        "type": "Receivables"
+      },
+      "creditedAccount": {
+        "name": "Revenues Accommodation (7%)",
+        "number": "RevenueAccommodation_Reduced:7.00",
+        "parentNumber": "5000",
+        "type": "Revenues"
+      },
+      "command": "PostCharge",
+      "currency": "EUR",
+      "grossAmount": 84,
+      "netAmount": 78.5046729,
+      "taxes": [
+        {
+          "type": "Reduced",
+          "percent": 7,
+          "amount": 5.4953271
+        }
+      ],
+      "receipt": {
+        "type": "Reservation",
+        "number": "LJJRUJKV-1-V0"
+      },
+      "sourceEntryNumber": "000000008",
+      "reference": "LJJRUJKV-1",
+      "referenceType": "Guest"
+    },
+    {
+      "timestamp": "2026-10-21T11:45:39Z",
+      "date": "2026-10-21",
+      "debitedAccount": {
+        "name": "Visa Credit Card Payment",
+        "number": "1102",
+        "parentNumber": "1000",
+        "type": "Payments"
+      },
+      "creditedAccount": {
+        "name": "Liabilities for Reservation LJJRUJKV-1 (7%)",
+        "number": "LJJRUJKV-1_Liabilities/Reduced:7.00",
+        "parentNumber": "3000",
+        "type": "Liabilities"
+      },
+      "command": "PostPrepayment",
+      "currency": "EUR",
+      "grossAmount": 84,
+      "netAmount": 78.5046729,
+      "taxes": [
+        {
+          "type": "Reduced",
+          "percent": 7,
+          "amount": 5.4953271
+        }
+      ],
+      "receipt": {
+        "type": "Custom",
+        "number": "CC-BER-R1"
+      },
+      "sourceEntryNumber": "000000007",
+      "reference": "LJJRUJKV-1",
+      "referenceType": "Guest"
+    },
+    {
+      "timestamp": "2026-10-21T11:41:28Z",
+      "date": "2026-10-21",
+      "debitedAccount": {
+        "name": "Cash Payment",
+        "number": "1600",
+        "parentNumber": "1000",
+        "type": "Payments"
+      },
+      "creditedAccount": {
+        "name": "Receivables for Reservation EPEBVUIU-1 (Offset)",
+        "number": "EPEBVUIU-1_Receivables/Offset",
+        "parentNumber": "1200",
+        "type": "Receivables"
+      },
+      "command": "PostPayment",
+      "currency": "EUR",
+      "grossAmount": 50,
+      "netAmount": 50,
+      "receipt": {
+        "type": "Custom",
+        "number": "CASH-BER-R6"
+      },
+      "sourceEntryNumber": "000000006",
+      "reference": "EPEBVUIU-1",
+      "referenceType": "Guest"
+    },
+    {
+      "timestamp": "2026-10-21T11:41:28Z",
+      "date": "2026-10-21",
+      "debitedAccount": {
+        "name": "Receivables for Reservation EPEBVUIU-1",
+        "number": "EPEBVUIU-1_Receivables",
+        "parentNumber": "1200",
+        "type": "Receivables"
+      },
+      "creditedAccount": {
+        "name": "Receivables for Reservation EPEBVUIU-1 (Offset)",
+        "number": "EPEBVUIU-1_Receivables/Offset",
+        "parentNumber": "1200",
+        "type": "Receivables"
+      },
+      "command": "PostPayment",
+      "currency": "EUR",
+      "grossAmount": -50,
+      "netAmount": -50,
+      "receipt": {
+        "type": "Custom",
+        "number": "CASH-BER-R6"
+      },
+      "sourceEntryNumber": "000000006",
+      "reference": "EPEBVUIU-1",
+      "referenceType": "Guest"
+    },
+    {
+      "timestamp": "2026-10-21T11:41:27Z",
+      "date": "2026-10-21",
+      "debitedAccount": {
+        "name": "Receivables for Reservation EPEBVUIU-1",
+        "number": "EPEBVUIU-1_Receivables",
+        "parentNumber": "1200",
+        "type": "Receivables"
+      },
+      "creditedAccount": {
+        "name": "Revenues Food and beverages (7%)",
+        "number": "RevenueFoodAndBeverages_Reduced:7.00",
+        "parentNumber": "5000",
+        "type": "Revenues"
+      },
+      "command": "PostCharge",
+      "currency": "EUR",
+      "grossAmount": 38.4,
+      "netAmount": 35.88785047,
+      "taxes": [
+        {
+          "type": "Reduced",
+          "percent": 7,
+          "amount": 2.51214953
+        }
+      ],
+      "receipt": {
+        "type": "Custom",
+        "number": "REST-BER-1"
+      },
+      "sourceEntryNumber": "000000005",
+      "reference": "EPEBVUIU-1",
+      "referenceType": "Guest"
+    },
+    {
+      "timestamp": "2026-10-21T11:41:27Z",
+      "date": "2026-10-21",
+      "debitedAccount": {
+        "name": "Receivables for Reservation EPEBVUIU-1",
+        "number": "EPEBVUIU-1_Receivables",
+        "parentNumber": "1200",
+        "type": "Receivables"
+      },
+      "creditedAccount": {
+        "name": "Revenues Food and beverages (19%)",
+        "number": "RevenueFoodAndBeverages_Normal:19.00",
+        "parentNumber": "5000",
+        "type": "Revenues"
+      },
+      "command": "PostCharge",
+      "currency": "EUR",
+      "grossAmount": 12.5,
+      "netAmount": 10.50420168,
+      "taxes": [
+        {
+          "type": "Normal",
+          "percent": 19,
+          "amount": 1.99579832
+        }
+      ],
+      "receipt": {
+        "type": "Custom",
+        "number": "MB-BER-1"
+      },
+      "sourceEntryNumber": "000000004",
+      "reference": "EPEBVUIU-1",
+      "referenceType": "Guest"
+    },
+    {
+      "timestamp": "2026-10-21T11:41:21Z",
+      "date": "2026-10-21",
+      "debitedAccount": {
+        "name": "MasterCard Credit Card Payment",
+        "number": "1104",
+        "parentNumber": "1000",
+        "type": "Payments"
+      },
+      "creditedAccount": {
+        "name": "Receivables for Reservation UMCQGWOZ-1 (Offset)",
+        "number": "UMCQGWOZ-1_Receivables/Offset",
+        "parentNumber": "1200",
+        "type": "Receivables"
+      },
+      "command": "PostPayment",
+      "currency": "EUR",
+      "grossAmount": 45,
+      "netAmount": 45,
+      "receipt": {
+        "type": "Custom",
+        "number": "CXL-BER-R4"
+      },
+      "sourceEntryNumber": "000000003",
+      "reference": "UMCQGWOZ-1",
+      "referenceType": "Guest"
+    },
+    {
+      "timestamp": "2026-10-21T11:41:21Z",
+      "date": "2026-10-21",
+      "debitedAccount": {
+        "name": "Receivables for Reservation UMCQGWOZ-1",
+        "number": "UMCQGWOZ-1_Receivables",
+        "parentNumber": "1200",
+        "type": "Receivables"
+      },
+      "creditedAccount": {
+        "name": "Receivables for Reservation UMCQGWOZ-1 (Offset)",
+        "number": "UMCQGWOZ-1_Receivables/Offset",
+        "parentNumber": "1200",
+        "type": "Receivables"
+      },
+      "command": "PostPayment",
+      "currency": "EUR",
+      "grossAmount": -45,
+      "netAmount": -45,
+      "receipt": {
+        "type": "Custom",
+        "number": "CXL-BER-R4"
+      },
+      "sourceEntryNumber": "000000003",
+      "reference": "UMCQGWOZ-1",
+      "referenceType": "Guest"
+    },
+    {
+      "timestamp": "2026-10-21T11:41:20Z",
+      "date": "2026-10-21",
+      "debitedAccount": {
+        "name": "Receivables for Reservation UMCQGWOZ-1",
+        "number": "UMCQGWOZ-1_Receivables",
+        "parentNumber": "1200",
+        "type": "Receivables"
+      },
+      "creditedAccount": {
+        "name": "Revenues Cancellation fees (no VAT)",
+        "number": "RevenueCancellationFees_Without:0.00",
+        "parentNumber": "5000",
+        "type": "Revenues"
+      },
+      "command": "PostCharge",
+      "currency": "EUR",
+      "grossAmount": 45,
+      "netAmount": 45,
+      "receipt": {
+        "type": "Reservation",
+        "number": "UMCQGWOZ-1-V1"
+      },
+      "sourceEntryNumber": "000000002",
+      "reference": "UMCQGWOZ-1",
+      "referenceType": "Guest"
+    },
+    {
+      "timestamp": "2026-10-21T11:40:48Z",
+      "date": "2026-10-21",
+      "debitedAccount": {
+        "name": "Visa Credit Card Payment",
+        "number": "1102",
+        "parentNumber": "1000",
+        "type": "Payments"
+      },
+      "creditedAccount": {
+        "name": "Liabilities for Reservation HTEQYNAD-1 (7%)",
+        "number": "HTEQYNAD-1_Liabilities/Reduced:7.00",
+        "parentNumber": "3000",
+        "type": "Liabilities"
+      },
+      "command": "PostPrepayment",
+      "currency": "EUR",
+      "grossAmount": 104,
+      "netAmount": 97.19626168,
+      "taxes": [
+        {
+          "type": "Reduced",
+          "percent": 7,
+          "amount": 6.80373832
+        }
+      ],
+      "receipt": {
+        "type": "Custom",
+        "number": "DEP-BER-R3"
+      },
+      "sourceEntryNumber": "000000001",
+      "reference": "HTEQYNAD-1",
+      "referenceType": "Guest"
+    }
+  ]
+}

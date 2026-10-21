@@ -3,7 +3,7 @@ import { ChartIndex } from '../../src/core/chart.js';
 import type { AccountRef } from '../../src/core/source.js';
 import { lineRate, resolve } from '../../src/mapping/index.js';
 import { loadBeispielData, BSP } from '../helpers/apaleo.js';
-import { ledgerLine } from '../helpers/ledger.js';
+import { ledgerLine, tax } from '../helpers/ledger.js';
 import { mappingOf, mappingRow } from '../helpers/mapping.js';
 
 const ref = (number: string, type: string, parentNumber?: string): AccountRef => ({
@@ -84,7 +84,7 @@ describe('per-reservation accounts without a parent (Swagger shape)', () => {
     const line = ledgerLine({
       debit: { number: 'BSP-ABCDEF-1_Receivables', name: 'Receivables', type: 'Receivables' },
       credit: { number: 'BSP-ABCDEF-1_Liabilities', name: 'Liabilities', type: 'Liabilities' },
-      taxes: [{ vatType: 'Reduced', percent: 7, amountCents: 1308 }],
+      taxes: [tax('Reduced', 7, 1308)],
     });
     const rate = lineRate(line);
     expect(rate).toBe(7);
@@ -96,8 +96,8 @@ describe('per-reservation accounts without a parent (Swagger shape)', () => {
     const line = ledgerLine({
       credit: { number: 'BSP-ABCDEF-1_Liabilities', name: 'Liabilities', type: 'Liabilities' },
       taxes: [
-        { vatType: 'Reduced', percent: 7, amountCents: 100 },
-        { vatType: 'Normal', percent: 19, amountCents: 50 },
+        tax('Reduced', 7, 100),
+        tax('Normal', 19, 50),
       ],
     });
     expect(lineRate(line)).toBeUndefined();
@@ -107,9 +107,9 @@ describe('per-reservation accounts without a parent (Swagger shape)', () => {
 
 describe('lineRate', () => {
   it('drops tax entries with percent 0 and amount 0 and gives 0 for a line without taxes', () => {
-    expect(lineRate({ taxes: [{ vatType: 'Without', percent: 0, amountCents: 0 }] })).toBe(0);
+    expect(lineRate({ taxes: [tax('Without', 0, 0)] })).toBe(0);
     expect(lineRate({ taxes: [] })).toBe(0);
-    expect(lineRate({ taxes: [{ vatType: 'Without', percent: 0, amountCents: 0 }, { vatType: 'Normal', percent: 19, amountCents: 380 }] })).toBe(19);
-    expect(lineRate({ taxes: [{ vatType: 'Reduced', percent: 7, amountCents: -65 }, { vatType: 'Reduced', percent: 7, amountCents: 10 }] })).toBe(7);
+    expect(lineRate({ taxes: [tax('Without', 0, 0), tax('Normal', 19, 380)] })).toBe(19);
+    expect(lineRate({ taxes: [tax('Reduced', 7, -65), tax('Reduced', 7, 10)] })).toBe(7);
   });
 });

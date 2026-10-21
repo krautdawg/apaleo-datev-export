@@ -1,17 +1,17 @@
 ## 1. Live fixtures first
 
-- [ ] 1.1 Write a scan script outside the fixture folder (`test/helpers/` or `scripts/`) that rejects keys or values matching token, secret, bearer, authorization, password or e-mail patterns and any account name that is not an apaleo default name or `… for Reservation|Folio <id>`; run it over `~/.config/apaleo-datev-dev/recordings/` (never read or copy any `.env` file there; skip `*_folios_*`) and keep its output for the README
-- [ ] 1.2 Copy, unwrapped to the bare response `body`, BER and VIE `accounts-schema.json`, `export-gross-daily/2026-10-21.json`, `export-gross-daily/2026-10-22.json`, `aggregate-daily/2026-10-21.json`, `aggregate-daily/2026-10-22.json` into `test/fixtures/apaleo/live/<BER|VIE>/`; strip names, e-mails and addresses if any appear (none expected)
-- [ ] 1.3 Write `test/fixtures/apaleo/live/README.md` (origin: apaleo DEV sandbox, synthetic guests, recorded 2026-10-21 before night audit; files; scan result; hand-checked BER totals from design.md)
-- [ ] 1.4 Extend `test/helpers/apaleo.ts` so the fake API can serve the live folder, and add the live files to the Swagger validation in `test/apaleo/fixtures.test.ts`
-- [ ] 1.5 Add a failing test: reading the BER ledger of 2026-10-21 through the adapter succeeds (today it throws the sub-cent error on entry `000000032`)
+- [x] 1.1 Write a scan script outside the fixture folder (`test/helpers/` or `scripts/`) that rejects keys or values matching token, secret, bearer, authorization, password or e-mail patterns and any account name that is not an apaleo default name or `… for Reservation|Folio <id>`; run it over `~/.config/apaleo-datev-dev/recordings/` (never read or copy any `.env` file there; skip `*_folios_*`) and keep its output for the README
+- [x] 1.2 Copy, unwrapped to the bare response `body`, BER and VIE `accounts-schema.json`, `export-gross-daily/2026-10-21.json`, `export-gross-daily/2026-10-22.json`, `aggregate-daily/2026-10-21.json`, `aggregate-daily/2026-10-22.json` into `test/fixtures/apaleo/live/<BER|VIE>/`; strip names, e-mails and addresses if any appear (none expected)
+- [x] 1.3 Write `test/fixtures/apaleo/live/README.md` (origin: apaleo DEV sandbox, synthetic guests, recorded 2026-10-21 before night audit; files; scan result; hand-checked BER totals from design.md)
+- [x] 1.4 Extend `test/helpers/apaleo.ts` so the fake API can serve the live folder, and add the live files to the Swagger validation in `test/apaleo/fixtures.test.ts`
+- [x] 1.5 Add a failing test: reading the BER ledger of 2026-10-21 through the adapter succeeds (today it throws the sub-cent error on entry `000000032`)
 
 ## 2. Precise amounts (defect 1)
 
-- [ ] 2.1 Add exact decimal helpers to `src/core/money.ts` (`sumDecimals`, comparison, half-away rounding reused from `decimalToCents`) with tests, including `37.3695327` from the eight 7 % lines
-- [ ] 2.2 Add `netPrecise` to `LedgerLine` and `amountPrecise` to `LedgerTax` in `src/core/source.ts`; update `docs/architecture.md` and the demo source and test helpers that build lines
-- [ ] 2.3 In `src/sources/apaleo/parse.ts` keep `toCents` for `grossAmount` only; derive `netCents`/`amountCents` by half-away rounding of the precise text; check `|gross − net − Σ taxes| ≤ 0.005` and fail naming day and entry; tests for the real line `000000032` and for an inconsistent line
-- [ ] 2.4 Make test 1.5 pass; run `pnpm test`, `pnpm lint`, `pnpm typecheck`
+- [x] 2.1 Add exact decimal helpers to `src/core/money.ts` (`sumDecimals`, comparison, half-away rounding reused from `decimalToCents`) with tests, including `37.3695327` from the eight 7 % lines
+- [x] 2.2 Add `netPrecise` to `LedgerLine` and `amountPrecise` to `LedgerTax` in `src/core/source.ts`; update `docs/architecture.md` and the demo source and test helpers that build lines
+- [x] 2.3 In `src/sources/apaleo/parse.ts` keep `toCents` for `grossAmount` only; derive `netCents`/`amountCents` by half-away rounding of the precise text; check `|gross − net − Σ taxes| ≤ 0.005` and fail naming day and entry; tests for the real line `000000032` and for an inconsistent line
+- [x] 2.4 Make test 1.5 pass; run `pnpm test`, `pnpm lint`, `pnpm typecheck`
 
 ## 3. Resolver and templates (defects 2, 3, 10)
 

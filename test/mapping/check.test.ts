@@ -14,7 +14,7 @@ import {
 import { releaseRateOf } from '../../src/posting/index.js';
 import { BSP, loadBeispielData } from '../helpers/apaleo.js';
 import { FakeSource } from '../helpers/fake-source.js';
-import { ledgerLine } from '../helpers/ledger.js';
+import { ledgerLine, tax } from '../helpers/ledger.js';
 import { mappingOf, mappingRow } from '../helpers/mapping.js';
 
 const check = (rows: MappingRowValues[], sachkontenlaenge = 4, skr: '03' | '04' = '03') =>
@@ -254,8 +254,8 @@ describe('checkCoverage', () => {
     const liabilities = { number: 'BSP-X-1_Liabilities', name: 'Liabilities', type: 'Liabilities' };
     const receivables = { number: 'BSP-X-1_Receivables', name: 'R', type: 'Receivables' };
     const release = ledgerLine({ debit: liabilities, credit: receivables, taxes: [], reference: 'BSP-X-1' });
-    const without = ledgerLine({ debit: liabilities, credit: receivables, taxes: [{ vatType: 'Without', percent: 0, amountCents: 0 }] });
-    const taxed = ledgerLine({ debit: liabilities, credit: receivables, taxes: [{ vatType: 'Reduced', percent: 7, amountCents: 654 }] });
+    const without = ledgerLine({ debit: liabilities, credit: receivables, taxes: [tax('Without', 0, 0)] });
+    const taxed = ledgerLine({ debit: liabilities, credit: receivables, taxes: [tax('Reduced', 7, 654)] });
     const untaxedRevenue = ledgerLine({ credit: { number: '5990', name: 'No VAT', type: 'Revenues' }, taxes: [] });
     const rateOf = releaseRateOf([release, without, taxed, untaxedRevenue], undefined);
     expect([release, without, taxed, untaxedRevenue].map(rateOf)).toEqual([undefined, undefined, 7, 0]);
@@ -265,7 +265,7 @@ describe('checkCoverage', () => {
       credit: liabilities,
       command: 'PostPrepaymentVat',
       grossCents: 654,
-      taxes: [{ vatType: 'Reduced', percent: 7, amountCents: 654 }],
+      taxes: [tax('Reduced', 7, 654)],
       reference: 'BSP-X-1',
     });
     expect(releaseRateOf([release, pair], undefined)(release)).toBe(7);
@@ -341,7 +341,7 @@ describe('checkCoverage', () => {
         credit: liabilities,
         command: 'PostPrepaymentVat',
         grossCents: 1900,
-        taxes: [{ vatType: 'Normal', percent: 19, amountCents: 1900 }],
+        taxes: [tax('Normal', 19, 1900)],
         reference: 'BSP-X-1',
       },
     ]);
@@ -365,7 +365,7 @@ describe('checkCoverage', () => {
     const ledger = lines([
       { credit: food, grossCents: 1200 },
       { credit: food, grossCents: 1200 },
-      { credit: drinks, grossCents: 380, taxes: [{ vatType: 'Normal', percent: 19, amountCents: 61 }] },
+      { credit: drinks, grossCents: 380, taxes: [tax('Normal', 19, 61)] },
     ]);
     const findings = coverage(mapping, ledger, undefined, { skr: '03' });
     expect(codes(findings)).toEqual(['E-VAT-MISMATCH']);

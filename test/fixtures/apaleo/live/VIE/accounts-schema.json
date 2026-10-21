@@ -1,0 +1,1075 @@
+{
+  "globalAccounts": [
+    {
+      "accountNumber": "5000",
+      "name": "Revenues",
+      "type": "Revenues",
+      "hasChildren": true,
+      "isArchived": false,
+      "subAccounts": [
+        {
+          "accountNumber": "RevenueAccommodation",
+          "name": "Revenues Accommodation",
+          "type": "Revenues",
+          "parentNumber": "5000",
+          "hasChildren": true,
+          "isArchived": false,
+          "subAccounts": [
+            {
+              "accountNumber": "RevenueAccommodation_Normal:20.00",
+              "name": "Revenues Accommodation (20%)",
+              "type": "Revenues",
+              "parentNumber": "RevenueAccommodation",
+              "hasChildren": false,
+              "isArchived": false,
+              "vat": {
+                "type": "Normal",
+                "percent": 20
+              }
+            },
+            {
+              "accountNumber": "RevenueAccommodation_Null:0.00",
+              "name": "Revenues Accommodation (0%)",
+              "type": "Revenues",
+              "parentNumber": "RevenueAccommodation",
+              "hasChildren": false,
+              "isArchived": false,
+              "vat": {
+                "type": "Null",
+                "percent": 0
+              }
+            },
+            {
+              "accountNumber": "RevenueAccommodation_Reduced:13.00",
+              "name": "Revenues Accommodation (13%)",
+              "type": "Revenues",
+              "parentNumber": "RevenueAccommodation",
+              "hasChildren": false,
+              "isArchived": false,
+              "vat": {
+                "type": "Reduced",
+                "percent": 13
+              }
+            },
+            {
+              "accountNumber": "RevenueAccommodation_Special:4.90",
+              "name": "Revenues Accommodation (4.9%)",
+              "type": "Revenues",
+              "parentNumber": "RevenueAccommodation",
+              "hasChildren": false,
+              "isArchived": false,
+              "vat": {
+                "type": "Special",
+                "percent": 4.9
+              }
+            },
+            {
+              "accountNumber": "RevenueAccommodation_Special:5.00",
+              "name": "Revenues Accommodation (5%)",
+              "type": "Revenues",
+              "parentNumber": "RevenueAccommodation",
+              "hasChildren": false,
+              "isArchived": false,
+              "vat": {
+                "type": "Special",
+                "percent": 5
+              }
+            },
+            {
+              "accountNumber": "RevenueAccommodation_VeryReduced:10.00",
+              "name": "Revenues Accommodation (10%)",
+              "type": "Revenues",
+              "parentNumber": "RevenueAccommodation",
+              "hasChildren": false,
+              "isArchived": false,
+              "vat": {
+                "type": "VeryReduced",
+                "percent": 10
+              }
+            },
+            {
+              "accountNumber": "RevenueAccommodation_Without:0.00",
+              "name": "Revenues Accommodation (no VAT)",
+              "type": "Revenues",
+              "parentNumber": "RevenueAccommodation",
+              "hasChildren": false,
+              "isArchived": false,
+              "vat": {
+                "type": "Without",
+                "percent": 0
+              }
+            }
+          ]
+        },
+        {
+          "accountNumber": "RevenueCancellationFees",
+          "name": "Revenues Cancellation fees",
+          "type": "Revenues",
+          "parentNumber": "5000",
+          "hasChildren": true,
+          "isArchived": false,
+          "subAccounts": [
+            {
+              "accountNumber": "RevenueCancellationFees_Normal:20.00",
+              "name": "Revenues Cancellation fees (20%)",
+              "type": "Revenues",
+              "parentNumber": "RevenueCancellationFees",
+              "hasChildren": false,
+              "isArchived": true,
+              "vat": {
+                "type": "Normal",
+                "percent": 20
+              }
+            },
+            {
+              "accountNumber": "RevenueCancellationFees_Null:0.00",
+              "name": "Revenues Cancellation fees (0%)",
+              "type": "Revenues",
+              "parentNumber": "RevenueCancellationFees",
+              "hasChildren": false,
+              "isArchived": true,
+              "vat": {
+                "type": "Null",
+                "percent": 0
+              }
+            },
+            {
+              "accountNumber": "RevenueCancellationFees_Reduced:13.00",
+              "name": "Revenues Cancellation fees (13%)",
+              "type": "Revenues",
+              "parentNumber": "RevenueCancellationFees",
+              "hasChildren": false,
+              "isArchived": true,
+              "vat": {
+                "type": "Reduced",
+                "percent": 13
+              }
+            },
+            {
+              "accountNumber": "RevenueCancellationFees_Special:4.90",
+              "name": "Revenues Cancellation fees (4.9%)",
+              "type": "Revenues",
+              "parentNumber": "RevenueCancellationFees",
+              "hasChildren": false,
+              "isArchived": true,
+              "vat": {
+                "type": "Special",
+                "percent": 4.9
+              }
+            },
+            {
+              "accountNumber": "RevenueCancellationFees_Special:5.00",
+              "name": "Revenues Cancellation fees (5%)",
+              "type": "Revenues",
+              "parentNumber": "RevenueCancellationFees",
+              "hasChildren": false,
+              "isArchived": true,
+              "vat": {
+                "type": "Special",
+                "percent": 5
+              }
+            },
+            {
+              "accountNumber": "RevenueCancellationFees_VeryReduced:10.00",
+              "name": "Revenues Cancellation fees (10%)",
+              "type": "Revenues",
+              "parentNumber": "RevenueCancellationFees",
+              "hasChildren": false,
+              "isArchived": true,
+              "vat": {
+                "type": "VeryReduced",
+                "percent": 10
+              }
+            },
+            {
+              "accountNumber": "RevenueCancellationFees_Without:0.00",
+              "name": "Revenues Cancellation fees (no VAT)",
+              "type": "Revenues",
+              "parentNumber": "RevenueCancellationFees",
+              "hasChildren": false,
+              "isArchived": false,
+              "vat": {
+                "type": "Without",
+                "percent": 0
+              }
+            }
+          ]
+        },
+        {
+          "accountNumber": "RevenueFoodAndBeverages",
+          "name": "Revenues Food and beverages",
+          "type": "Revenues",
+          "parentNumber": "5000",
+          "hasChildren": true,
+          "isArchived": false,
+          "subAccounts": [
+            {
+              "accountNumber": "RevenueFoodAndBeverages_Normal:20.00",
+              "name": "Revenues Food and beverages (20%)",
+              "type": "Revenues",
+              "parentNumber": "RevenueFoodAndBeverages",
+              "hasChildren": false,
+              "isArchived": false,
+              "vat": {
+                "type": "Normal",
+                "percent": 20
+              }
+            },
+            {
+              "accountNumber": "RevenueFoodAndBeverages_Null:0.00",
+              "name": "Revenues Food and beverages (0%)",
+              "type": "Revenues",
+              "parentNumber": "RevenueFoodAndBeverages",
+              "hasChildren": false,
+              "isArchived": false,
+              "vat": {
+                "type": "Null",
+                "percent": 0
+              }
+            },
+            {
+              "accountNumber": "RevenueFoodAndBeverages_Reduced:13.00",
+              "name": "Revenues Food and beverages (13%)",
+              "type": "Revenues",
+              "parentNumber": "RevenueFoodAndBeverages",
+              "hasChildren": false,
+              "isArchived": false,
+              "vat": {
+                "type": "Reduced",
+                "percent": 13
+              }
+            },
+            {
+              "accountNumber": "RevenueFoodAndBeverages_Special:4.90",
+              "name": "Revenues Food and beverages (4.9%)",
+              "type": "Revenues",
+              "parentNumber": "RevenueFoodAndBeverages",
+              "hasChildren": false,
+              "isArchived": false,
+              "vat": {
+                "type": "Special",
+                "percent": 4.9
+              }
+            },
+            {
+              "accountNumber": "RevenueFoodAndBeverages_Special:5.00",
+              "name": "Revenues Food and beverages (5%)",
+              "type": "Revenues",
+              "parentNumber": "RevenueFoodAndBeverages",
+              "hasChildren": false,
+              "isArchived": false,
+              "vat": {
+                "type": "Special",
+                "percent": 5
+              }
+            },
+            {
+              "accountNumber": "RevenueFoodAndBeverages_VeryReduced:10.00",
+              "name": "Revenues Food and beverages (10%)",
+              "type": "Revenues",
+              "parentNumber": "RevenueFoodAndBeverages",
+              "hasChildren": false,
+              "isArchived": false,
+              "vat": {
+                "type": "VeryReduced",
+                "percent": 10
+              }
+            },
+            {
+              "accountNumber": "RevenueFoodAndBeverages_Without:0.00",
+              "name": "Revenues Food and beverages (no VAT)",
+              "type": "Revenues",
+              "parentNumber": "RevenueFoodAndBeverages",
+              "hasChildren": false,
+              "isArchived": false,
+              "vat": {
+                "type": "Without",
+                "percent": 0
+              }
+            }
+          ]
+        },
+        {
+          "accountNumber": "RevenueNoShow",
+          "name": "Revenues No-show",
+          "type": "Revenues",
+          "parentNumber": "5000",
+          "hasChildren": true,
+          "isArchived": false,
+          "subAccounts": [
+            {
+              "accountNumber": "RevenueNoShow_Normal:20.00",
+              "name": "Revenues No-show (20%)",
+              "type": "Revenues",
+              "parentNumber": "RevenueNoShow",
+              "hasChildren": false,
+              "isArchived": true,
+              "vat": {
+                "type": "Normal",
+                "percent": 20
+              }
+            },
+            {
+              "accountNumber": "RevenueNoShow_Null:0.00",
+              "name": "Revenues No-show (0%)",
+              "type": "Revenues",
+              "parentNumber": "RevenueNoShow",
+              "hasChildren": false,
+              "isArchived": true,
+              "vat": {
+                "type": "Null",
+                "percent": 0
+              }
+            },
+            {
+              "accountNumber": "RevenueNoShow_Reduced:13.00",
+              "name": "Revenues No-show (13%)",
+              "type": "Revenues",
+              "parentNumber": "RevenueNoShow",
+              "hasChildren": false,
+              "isArchived": false,
+              "vat": {
+                "type": "Reduced",
+                "percent": 13
+              }
+            },
+            {
+              "accountNumber": "RevenueNoShow_Special:4.90",
+              "name": "Revenues No-show (4.9%)",
+              "type": "Revenues",
+              "parentNumber": "RevenueNoShow",
+              "hasChildren": false,
+              "isArchived": true,
+              "vat": {
+                "type": "Special",
+                "percent": 4.9
+              }
+            },
+            {
+              "accountNumber": "RevenueNoShow_Special:5.00",
+              "name": "Revenues No-show (5%)",
+              "type": "Revenues",
+              "parentNumber": "RevenueNoShow",
+              "hasChildren": false,
+              "isArchived": true,
+              "vat": {
+                "type": "Special",
+                "percent": 5
+              }
+            },
+            {
+              "accountNumber": "RevenueNoShow_VeryReduced:10.00",
+              "name": "Revenues No-show (10%)",
+              "type": "Revenues",
+              "parentNumber": "RevenueNoShow",
+              "hasChildren": false,
+              "isArchived": true,
+              "vat": {
+                "type": "VeryReduced",
+                "percent": 10
+              }
+            },
+            {
+              "accountNumber": "RevenueNoShow_Without:0.00",
+              "name": "Revenues No-show (no VAT)",
+              "type": "Revenues",
+              "parentNumber": "RevenueNoShow",
+              "hasChildren": false,
+              "isArchived": true,
+              "vat": {
+                "type": "Without",
+                "percent": 0
+              }
+            }
+          ]
+        },
+        {
+          "accountNumber": "RevenueOther",
+          "name": "Revenues Other",
+          "type": "Revenues",
+          "parentNumber": "5000",
+          "hasChildren": true,
+          "isArchived": false,
+          "subAccounts": [
+            {
+              "accountNumber": "RevenueOther_Normal:20.00",
+              "name": "Revenues Other (20%)",
+              "type": "Revenues",
+              "parentNumber": "RevenueOther",
+              "hasChildren": false,
+              "isArchived": false,
+              "vat": {
+                "type": "Normal",
+                "percent": 20
+              }
+            },
+            {
+              "accountNumber": "RevenueOther_Null:0.00",
+              "name": "Revenues Other (0%)",
+              "type": "Revenues",
+              "parentNumber": "RevenueOther",
+              "hasChildren": false,
+              "isArchived": false,
+              "vat": {
+                "type": "Null",
+                "percent": 0
+              }
+            },
+            {
+              "accountNumber": "RevenueOther_Reduced:13.00",
+              "name": "Revenues Other (13%)",
+              "type": "Revenues",
+              "parentNumber": "RevenueOther",
+              "hasChildren": false,
+              "isArchived": false,
+              "vat": {
+                "type": "Reduced",
+                "percent": 13
+              }
+            },
+            {
+              "accountNumber": "RevenueOther_Special:4.90",
+              "name": "Revenues Other (4.9%)",
+              "type": "Revenues",
+              "parentNumber": "RevenueOther",
+              "hasChildren": false,
+              "isArchived": false,
+              "vat": {
+                "type": "Special",
+                "percent": 4.9
+              }
+            },
+            {
+              "accountNumber": "RevenueOther_Special:5.00",
+              "name": "Revenues Other (5%)",
+              "type": "Revenues",
+              "parentNumber": "RevenueOther",
+              "hasChildren": false,
+              "isArchived": false,
+              "vat": {
+                "type": "Special",
+                "percent": 5
+              }
+            },
+            {
+              "accountNumber": "RevenueOther_VeryReduced:10.00",
+              "name": "Revenues Other (10%)",
+              "type": "Revenues",
+              "parentNumber": "RevenueOther",
+              "hasChildren": false,
+              "isArchived": false,
+              "vat": {
+                "type": "VeryReduced",
+                "percent": 10
+              }
+            },
+            {
+              "accountNumber": "RevenueOther_Without:0.00",
+              "name": "Revenues Other (no VAT)",
+              "type": "Revenues",
+              "parentNumber": "RevenueOther",
+              "hasChildren": false,
+              "isArchived": false,
+              "vat": {
+                "type": "Without",
+                "percent": 0
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "accountNumber": "1000",
+      "name": "Payments",
+      "type": "Payments",
+      "hasChildren": true,
+      "isArchived": false,
+      "subAccounts": [
+        {
+          "accountNumber": "1100",
+          "name": "Credit Card Payment",
+          "type": "Payments",
+          "parentNumber": "1000",
+          "hasChildren": false,
+          "isArchived": false
+        },
+        {
+          "accountNumber": "1101",
+          "name": "Amex Credit Card Payment",
+          "type": "Payments",
+          "parentNumber": "1000",
+          "hasChildren": false,
+          "isArchived": false
+        },
+        {
+          "accountNumber": "1102",
+          "name": "Visa Credit Card Payment",
+          "type": "Payments",
+          "parentNumber": "1000",
+          "hasChildren": false,
+          "isArchived": false
+        },
+        {
+          "accountNumber": "1103",
+          "name": "Visa Debit Card Payment",
+          "type": "Payments",
+          "parentNumber": "1000",
+          "hasChildren": false,
+          "isArchived": false
+        },
+        {
+          "accountNumber": "1104",
+          "name": "MasterCard Credit Card Payment",
+          "type": "Payments",
+          "parentNumber": "1000",
+          "hasChildren": false,
+          "isArchived": false
+        },
+        {
+          "accountNumber": "1105",
+          "name": "MasterCard Debit Card Payment",
+          "type": "Payments",
+          "parentNumber": "1000",
+          "hasChildren": false,
+          "isArchived": false
+        },
+        {
+          "accountNumber": "1106",
+          "name": "Maestro Card Payment",
+          "type": "Payments",
+          "parentNumber": "1000",
+          "hasChildren": false,
+          "isArchived": false
+        },
+        {
+          "accountNumber": "1107",
+          "name": "GiroCard Payment",
+          "type": "Payments",
+          "parentNumber": "1000",
+          "hasChildren": false,
+          "isArchived": false
+        },
+        {
+          "accountNumber": "1108",
+          "name": "Discover Credit Card Payment",
+          "type": "Payments",
+          "parentNumber": "1000",
+          "hasChildren": false,
+          "isArchived": false
+        },
+        {
+          "accountNumber": "1109",
+          "name": "Diners Club Credit Card Payment",
+          "type": "Payments",
+          "parentNumber": "1000",
+          "hasChildren": false,
+          "isArchived": false
+        },
+        {
+          "accountNumber": "1110",
+          "name": "Jcb Credit Card Payment",
+          "type": "Payments",
+          "parentNumber": "1000",
+          "hasChildren": false,
+          "isArchived": false
+        },
+        {
+          "accountNumber": "1111",
+          "name": "V Pay Payment",
+          "type": "Payments",
+          "parentNumber": "1000",
+          "hasChildren": false,
+          "isArchived": false
+        },
+        {
+          "accountNumber": "1112",
+          "name": "Postcard Payment",
+          "type": "Payments",
+          "parentNumber": "1000",
+          "hasChildren": false,
+          "isArchived": false
+        },
+        {
+          "accountNumber": "1113",
+          "name": "Reka Payment",
+          "type": "Payments",
+          "parentNumber": "1000",
+          "hasChildren": false,
+          "isArchived": false
+        },
+        {
+          "accountNumber": "1114",
+          "name": "Twint Payment",
+          "type": "Payments",
+          "parentNumber": "1000",
+          "hasChildren": false,
+          "isArchived": false
+        },
+        {
+          "accountNumber": "1115",
+          "name": "Lunch-Check Payment",
+          "type": "Payments",
+          "parentNumber": "1000",
+          "hasChildren": false,
+          "isArchived": false
+        },
+        {
+          "accountNumber": "1116",
+          "name": "Voucher Payment",
+          "type": "Payments",
+          "parentNumber": "1000",
+          "hasChildren": false,
+          "isArchived": false
+        },
+        {
+          "accountNumber": "1117",
+          "name": "China Union Pay Payment",
+          "type": "Payments",
+          "parentNumber": "1000",
+          "hasChildren": false,
+          "isArchived": false
+        },
+        {
+          "accountNumber": "1118",
+          "name": "Other Payment",
+          "type": "Payments",
+          "parentNumber": "1000",
+          "hasChildren": false,
+          "isArchived": false
+        },
+        {
+          "accountNumber": "1119",
+          "name": "Cheque",
+          "type": "Payments",
+          "parentNumber": "1000",
+          "hasChildren": false,
+          "isArchived": false
+        },
+        {
+          "accountNumber": "1120",
+          "name": "Payment by Booking.com",
+          "type": "Payments",
+          "parentNumber": "1000",
+          "hasChildren": false,
+          "isArchived": false
+        },
+        {
+          "accountNumber": "1121",
+          "name": "Airbnb",
+          "type": "Payments",
+          "parentNumber": "1000",
+          "hasChildren": false,
+          "isArchived": false
+        },
+        {
+          "accountNumber": "1122",
+          "name": "Holiday Check",
+          "type": "Payments",
+          "parentNumber": "1000",
+          "hasChildren": false,
+          "isArchived": false
+        },
+        {
+          "accountNumber": "1123",
+          "name": "Representation",
+          "type": "Payments",
+          "parentNumber": "1000",
+          "hasChildren": false,
+          "isArchived": false
+        },
+        {
+          "accountNumber": "1140",
+          "name": "PayPal Payment",
+          "type": "Payments",
+          "parentNumber": "1000",
+          "hasChildren": false,
+          "isArchived": false
+        },
+        {
+          "accountNumber": "1145",
+          "name": "Cash and ATM",
+          "type": "Payments",
+          "parentNumber": "1000",
+          "hasChildren": false,
+          "isArchived": false
+        },
+        {
+          "accountNumber": "1146",
+          "name": "Direct Debit",
+          "type": "Payments",
+          "parentNumber": "1000",
+          "hasChildren": false,
+          "isArchived": false
+        },
+        {
+          "accountNumber": "1147",
+          "name": "Online banking",
+          "type": "Payments",
+          "parentNumber": "1000",
+          "hasChildren": false,
+          "isArchived": false
+        },
+        {
+          "accountNumber": "1148",
+          "name": "Open Invoice",
+          "type": "Payments",
+          "parentNumber": "1000",
+          "hasChildren": false,
+          "isArchived": false
+        },
+        {
+          "accountNumber": "1149",
+          "name": "E-Wallets",
+          "type": "Payments",
+          "parentNumber": "1000",
+          "hasChildren": false,
+          "isArchived": false
+        },
+        {
+          "accountNumber": "1150",
+          "name": "iDeal",
+          "type": "Payments",
+          "parentNumber": "1000",
+          "hasChildren": false,
+          "isArchived": false
+        },
+        {
+          "accountNumber": "1400",
+          "name": "Bank Transfer",
+          "type": "Payments",
+          "parentNumber": "1000",
+          "hasChildren": false,
+          "isArchived": false
+        },
+        {
+          "accountNumber": "1600",
+          "name": "Cash Payment",
+          "type": "Payments",
+          "parentNumber": "1000",
+          "hasChildren": false,
+          "isArchived": false
+        }
+      ]
+    },
+    {
+      "accountNumber": "8000",
+      "name": "Vat on Revenue",
+      "type": "Vat",
+      "hasChildren": true,
+      "isArchived": false,
+      "subAccounts": [
+        {
+          "accountNumber": "Vat_Normal:20.00",
+          "name": "VAT Normal (20%)",
+          "type": "Vat",
+          "parentNumber": "8000",
+          "hasChildren": false,
+          "isArchived": false,
+          "vat": {
+            "type": "Normal",
+            "percent": 20
+          }
+        },
+        {
+          "accountNumber": "Vat_Null:0.00",
+          "name": "VAT Null (0%)",
+          "type": "Vat",
+          "parentNumber": "8000",
+          "hasChildren": false,
+          "isArchived": false,
+          "vat": {
+            "type": "Null",
+            "percent": 0
+          }
+        },
+        {
+          "accountNumber": "Vat_Reduced:13.00",
+          "name": "VAT Reduced (13%)",
+          "type": "Vat",
+          "parentNumber": "8000",
+          "hasChildren": false,
+          "isArchived": false,
+          "vat": {
+            "type": "Reduced",
+            "percent": 13
+          }
+        },
+        {
+          "accountNumber": "Vat_Special:4.90",
+          "name": "VAT Special (4.9%)",
+          "type": "Vat",
+          "parentNumber": "8000",
+          "hasChildren": false,
+          "isArchived": false,
+          "vat": {
+            "type": "Special",
+            "percent": 4.9
+          }
+        },
+        {
+          "accountNumber": "Vat_Special:5.00",
+          "name": "VAT Special (5%)",
+          "type": "Vat",
+          "parentNumber": "8000",
+          "hasChildren": false,
+          "isArchived": false,
+          "vat": {
+            "type": "Special",
+            "percent": 5
+          }
+        },
+        {
+          "accountNumber": "Vat_VeryReduced:10.00",
+          "name": "VAT Very Reduced (10%)",
+          "type": "Vat",
+          "parentNumber": "8000",
+          "hasChildren": false,
+          "isArchived": false,
+          "vat": {
+            "type": "VeryReduced",
+            "percent": 10
+          }
+        }
+      ]
+    },
+    {
+      "accountNumber": "8001",
+      "name": "Vat on Prepayment",
+      "type": "VatOnLiabilities",
+      "hasChildren": true,
+      "isArchived": false,
+      "subAccounts": [
+        {
+          "accountNumber": "LiabilitiesVat_Normal:20.00",
+          "name": "LiabilitiesVat Normal (20%)",
+          "type": "VatOnLiabilities",
+          "parentNumber": "8001",
+          "hasChildren": false,
+          "isArchived": false,
+          "vat": {
+            "type": "Normal",
+            "percent": 20
+          }
+        },
+        {
+          "accountNumber": "LiabilitiesVat_Null:0.00",
+          "name": "LiabilitiesVat Null (0%)",
+          "type": "VatOnLiabilities",
+          "parentNumber": "8001",
+          "hasChildren": false,
+          "isArchived": false,
+          "vat": {
+            "type": "Null",
+            "percent": 0
+          }
+        },
+        {
+          "accountNumber": "LiabilitiesVat_Reduced:13.00",
+          "name": "LiabilitiesVat Reduced (13%)",
+          "type": "VatOnLiabilities",
+          "parentNumber": "8001",
+          "hasChildren": false,
+          "isArchived": false,
+          "vat": {
+            "type": "Reduced",
+            "percent": 13
+          }
+        },
+        {
+          "accountNumber": "LiabilitiesVat_Special:4.90",
+          "name": "LiabilitiesVat Special (4.9%)",
+          "type": "VatOnLiabilities",
+          "parentNumber": "8001",
+          "hasChildren": false,
+          "isArchived": false,
+          "vat": {
+            "type": "Special",
+            "percent": 4.9
+          }
+        },
+        {
+          "accountNumber": "LiabilitiesVat_Special:5.00",
+          "name": "LiabilitiesVat Special (5%)",
+          "type": "VatOnLiabilities",
+          "parentNumber": "8001",
+          "hasChildren": false,
+          "isArchived": false,
+          "vat": {
+            "type": "Special",
+            "percent": 5
+          }
+        },
+        {
+          "accountNumber": "LiabilitiesVat_VeryReduced:10.00",
+          "name": "LiabilitiesVat Very Reduced (10%)",
+          "type": "VatOnLiabilities",
+          "parentNumber": "8001",
+          "hasChildren": false,
+          "isArchived": false,
+          "vat": {
+            "type": "VeryReduced",
+            "percent": 10
+          }
+        }
+      ]
+    },
+    {
+      "accountNumber": "9000",
+      "name": "House Account",
+      "type": "House",
+      "hasChildren": false,
+      "isArchived": false
+    },
+    {
+      "accountNumber": "7000",
+      "name": "Transitory Items",
+      "type": "TransitoryItems",
+      "hasChildren": false,
+      "isArchived": false
+    }
+  ],
+  "guestAccounts": [
+    {
+      "accountNumber": "3000",
+      "name": "Liabilities",
+      "type": "Liabilities",
+      "hasChildren": true,
+      "isArchived": false
+    },
+    {
+      "accountNumber": "1200",
+      "name": "Receivables",
+      "type": "Receivables",
+      "hasChildren": true,
+      "isArchived": false
+    },
+    {
+      "accountNumber": "9999",
+      "name": "Accounts Receivable",
+      "type": "AccountsReceivable",
+      "hasChildren": true,
+      "isArchived": false,
+      "subAccounts": [
+        {
+          "accountNumber": "CollectiveDebitor_AccountsReceivable",
+          "name": "AccountsReceivable for Reservations and Folios without company",
+          "type": "AccountsReceivable",
+          "parentNumber": "9999",
+          "hasChildren": true,
+          "isArchived": false
+        }
+      ]
+    },
+    {
+      "accountNumber": "6900",
+      "name": "Loss of Accounts Receivable",
+      "type": "LossOfAccountsReceivable",
+      "hasChildren": true,
+      "isArchived": false,
+      "subAccounts": [
+        {
+          "accountNumber": "CollectiveDebitor_LossOfAccountsReceivable",
+          "name": "LossOfAccountsReceivable for Reservations and Folios without company",
+          "type": "LossOfAccountsReceivable",
+          "parentNumber": "6900",
+          "hasChildren": true,
+          "isArchived": false
+        }
+      ]
+    }
+  ],
+  "externalAccounts": [
+    {
+      "accountNumber": "1200",
+      "name": "Receivables",
+      "type": "Receivables",
+      "hasChildren": true,
+      "isArchived": false
+    },
+    {
+      "accountNumber": "9999",
+      "name": "Accounts Receivable",
+      "type": "AccountsReceivable",
+      "hasChildren": true,
+      "isArchived": false,
+      "subAccounts": [
+        {
+          "accountNumber": "CollectiveDebitor_AccountsReceivable",
+          "name": "AccountsReceivable for Reservations and Folios without company",
+          "type": "AccountsReceivable",
+          "parentNumber": "9999",
+          "hasChildren": true,
+          "isArchived": false
+        }
+      ]
+    },
+    {
+      "accountNumber": "6900",
+      "name": "Loss of Accounts Receivable",
+      "type": "LossOfAccountsReceivable",
+      "hasChildren": true,
+      "isArchived": false,
+      "subAccounts": [
+        {
+          "accountNumber": "CollectiveDebitor_LossOfAccountsReceivable",
+          "name": "LossOfAccountsReceivable for Reservations and Folios without company",
+          "type": "LossOfAccountsReceivable",
+          "parentNumber": "6900",
+          "hasChildren": true,
+          "isArchived": false
+        }
+      ]
+    }
+  ],
+  "bookingAccounts": [
+    {
+      "accountNumber": "3000",
+      "name": "Liabilities",
+      "type": "Liabilities",
+      "hasChildren": true,
+      "isArchived": false
+    },
+    {
+      "accountNumber": "1200",
+      "name": "Receivables",
+      "type": "Receivables",
+      "hasChildren": true,
+      "isArchived": false
+    },
+    {
+      "accountNumber": "9999",
+      "name": "Accounts Receivable",
+      "type": "AccountsReceivable",
+      "hasChildren": true,
+      "isArchived": false,
+      "subAccounts": [
+        {
+          "accountNumber": "CollectiveDebitor_AccountsReceivable",
+          "name": "AccountsReceivable for Reservations and Folios without company",
+          "type": "AccountsReceivable",
+          "parentNumber": "9999",
+          "hasChildren": true,
+          "isArchived": false
+        }
+      ]
+    },
+    {
+      "accountNumber": "6900",
+      "name": "Loss of Accounts Receivable",
+      "type": "LossOfAccountsReceivable",
+      "hasChildren": true,
+      "isArchived": false,
+      "subAccounts": [
+        {
+          "accountNumber": "CollectiveDebitor_LossOfAccountsReceivable",
+          "name": "LossOfAccountsReceivable for Reservations and Folios without company",
+          "type": "LossOfAccountsReceivable",
+          "parentNumber": "6900",
+          "hasChildren": true,
+          "isArchived": false
+        }
+      ]
+    }
+  ]
+}

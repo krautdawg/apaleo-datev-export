@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { isErrorFinding } from '../../src/core/findings.js';
 import type { LedgerLine } from '../../src/core/source.js';
-import { ledgerLine } from '../helpers/ledger.js';
+import { ledgerLine, tax as taxEntry } from '../helpers/ledger.js';
 import { mappingRow } from '../helpers/mapping.js';
 import { ACCOUNTS, mappingWith, post } from '../helpers/posting.js';
 
@@ -14,7 +14,7 @@ import { ACCOUNTS, mappingWith, post } from '../helpers/posting.js';
  */
 
 const codes = (findings: readonly { code: string }[]) => findings.map((f) => f.code);
-const tax = (percent: number, amountCents: number) => [{ vatType: percent === 7 ? 'Reduced' : 'Normal', percent, amountCents }];
+const tax = (percent: number, amountCents: number) => [taxEntry(percent === 7 ? 'Reduced' : 'Normal', percent, amountCents)];
 
 function single(line: LedgerLine, mapping = mappingWith()) {
   const result = post([line], mapping);
@@ -108,7 +108,7 @@ describe('VAT consistency guard', () => {
 
   it('drops a Without entry of 0 % and 0.00 on city tax instead of raising E-VAT-MISSING', () => {
     const { booking, findings } = single(
-      ledgerLine({ credit: ACCOUNTS.cityTax, grossCents: 500, netCents: 500, taxes: [{ vatType: 'Without', percent: 0, amountCents: 0 }] }),
+      ledgerLine({ credit: ACCOUNTS.cityTax, grossCents: 500, netCents: 500, taxes: [taxEntry('Without', 0, 0)] }),
     );
     expect(findings).toEqual([]);
     expect(booking).toMatchObject({ konto: '1410', gegenkonto: '1590', side: 'S', amountCents: 500 });

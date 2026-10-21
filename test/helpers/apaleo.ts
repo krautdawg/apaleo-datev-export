@@ -1,5 +1,5 @@
 import { existsSync, readFileSync } from 'node:fs';
-import type { LocalDate } from '../../src/core/date.js';
+import { nextDay, type LocalDate } from '../../src/core/date.js';
 import { ApaleoSource, type ApaleoSourceOptions } from '../../src/sources/apaleo/index.js';
 import { createTestContext, type TestContext, type TestContextOptions } from './context.js';
 import type { FakeSourceData } from './fake-source.js';
@@ -37,7 +37,32 @@ export function readFixture(relative: string): unknown {
   return JSON.parse(readFileSync(fixturePath(relative), 'utf8')) as unknown;
 }
 
+/**
+ * Recorded responses of a real apaleo DEV sandbox (`test/fixtures/apaleo/live/`,
+ * see its README): properties BER (Berlin) and VIE (Vienna), business days
+ * 2026-10-21 and 2026-10-22.
+ */
+export const LIVE_PROPERTIES = ['BER', 'VIE'] as const;
+export type LiveProperty = (typeof LIVE_PROPERTIES)[number];
+export const LIVE_DAY: LocalDate = '2026-10-21';
+export const LIVE_DAYS: readonly LocalDate[] = ['2026-10-21', '2026-10-22'];
+
+/** The recordings hold no property list; this one has the sandbox's two properties. */
+const LIVE_PROPERTY_LIST = {
+  properties: [
+    { id: 'BER', code: 'BER', name: 'Sandbox Berlin', timeZone: 'Europe/Berlin', currencyCode: 'EUR', location: { countryCode: 'DE' } },
+    { id: 'VIE', code: 'VIE', name: 'Sandbox Wien', timeZone: 'Europe/Vienna', currencyCode: 'EUR', location: { countryCode: 'AT' } },
+  ],
+  count: 2,
+};
+
+export function readLiveFixture(property: LiveProperty, relative: string): unknown {
+  return readFixture(`live/${property}/${relative}`);
+}
+
 export interface FixtureServerOptions {
+  /** Serve the live recordings (properties BER and VIE) instead of Hotel Beispiel. */
+  live?: boolean;
   /** Answer a request differently; return undefined to fall through to the fixtures. */
   override?: (request: Request, url: URL) => Response | undefined | Promise<Response | undefined>;
   /** Seconds the issued token is valid. Default 3600. */
@@ -55,25 +80,29 @@ export function apaleoFixtureHandler(options: FixtureServerOptions = {}) {
     }
     if (url.origin !== API) return undefined;
     if (request.headers.get('authorization') !== `Bearer ${ACCESS_TOKEN}`) return new Response(null, { status: 401 });
-    return apiResponse(request.method, url);
+    return apiResponse(request.method, url, options.live === true);
   };
 }
 
-function apiResponse(method: string, url: URL): Response | undefined {
+function apiResponse(method: string, url: URL, live: boolean): Response | undefined {
   const query = url.searchParams;
   const route = `${method} ${url.pathname}`;
   if (route === 'GET /inventory/v1/properties') {
-    return query.get('pageNumber') === '1' ? Response.json(readFixture('properties/page-1.json')) : noContent();
+    if (query.get('pageNumber') !== '1') return noContent();
+    return Response.json(live ? LIVE_PROPERTY_LIST : readFixture('properties/page-1.json'));
   }
-  if (query.get('propertyId') !== BSP) return new Response('{"messages":["Property not found"]}', { status: 404 });
-  if (route === 'GET /finance/v1/accounts/schema') return Response.json(readFixture('accounts-schema.json'));
+  const propertyId = query.get('propertyId') ?? '';
+  const known: readonly string[] = live ? LIVE_PROPERTIES : [BSP];
+  if (!known.includes(propertyId)) return new Response('{"messages":["Property not found"]}', { status: 404 });
+  const folder = live ? `live/${propertyId}/` : '';
+  if (route === 'GET /finance/v1/accounts/schema') return Response.json(readFixture(`${folder}accounts-schema.json`));
   const daily: Record<string, string> = {
     'POST /finance/v1/accounts/export-gross-daily': 'export-gross-daily',
     'POST /finance/v1/accounts/aggregate-daily': 'aggregate-daily',
   };
-  const folder = daily[route];
-  if (!folder) return undefined;
-  const file = `${folder}/${query.get('from')}.json`;
+  const kind = daily[route];
+  if (!kind) return undefined;
+  const file = `${folder}${kind}/${query.get('from')}.json`;
   return existsSync(fixturePath(file)) ? Response.json(readFixture(file)) : noContent();
 }
 
@@ -148,4 +177,17 @@ export async function loadBeispielData(): Promise<FakeSourceData> {
     ledger: { [BSP]: await source.getLedger(BSP, first, '2026-09-23') },
     totals: { [BSP]: await Promise.all(LEDGER_DAYS.map((day) => source.getAccountTotals(BSP, day))) },
   };
+}
+
+/** The live recordings of BER and VIE read through the real apaleo adapter, as canonical `FakeSource` data. */
+export async function loadLiveData(): Promise<FakeSourceData> {
+  const { source } = createFixtureSource({ live: true });
+  const data: FakeSourceData = { properties: await source.listProperties(), charts: {}, ledger: {}, totals: {} };
+  const [first, last] = LIVE_DAYS as [LocalDate, LocalDate];
+  for (const property of LIVE_PROPERTIES) {
+    data.charts[property] = await source.getChartOfAccounts(property);
+    data.ledger[property] = await source.getLedger(property, first, nextDay(last));
+    (data.totals ??= {})[property] = await Promise.all(LIVE_DAYS.map((day) => source.getAccountTotals(property, day)));
+  }
+  return data;
 }

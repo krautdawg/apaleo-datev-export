@@ -5,7 +5,7 @@ import type { LedgerLine } from '../../src/core/source.js';
 import { BSP, FIXTURE_FILES, loadBeispielData } from '../helpers/apaleo.js';
 import { createTestContext } from '../helpers/context.js';
 import { FakeSource } from '../helpers/fake-source.js';
-import { ledgerLine } from '../helpers/ledger.js';
+import { ledgerLine, tax } from '../helpers/ledger.js';
 
 const CONFIG = FIXTURE_FILES['apaleo-datev.config.yaml'];
 const HEADER = 'apaleo_account;apaleo_type;apaleo_name;apaleo_vat_percent;datev_account;bu_key;datev_vat_percent;kost1;kost2;comment';
@@ -164,7 +164,7 @@ describe('apaleo-datev mapping check --from --to', () => {
       credit: liabilities,
       command: 'PostPrepaymentVat',
       grossCents: 654,
-      taxes: [{ vatType: 'Reduced', percent: 7, amountCents: 654 }],
+      taxes: [tax('Reduced', 7, 654)],
       reference: 'BSP-X-1',
     });
     const mapping = (...rows: string[]) => csv('*;Receivables;;;1410;;;;;', '*;Liabilities;;7;1711;;7;;;', '*;Liabilities;;19;1718;;19;;;', ...rows);

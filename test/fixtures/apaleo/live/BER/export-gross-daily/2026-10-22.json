@@ -1,0 +1,140 @@
+{
+  "transactions": [
+    {
+      "timestamp": "2026-10-21T11:45:41Z",
+      "date": "2026-10-22",
+      "debitedAccount": {
+        "name": "Receivables for Reservation MXETGHPM-1",
+        "number": "MXETGHPM-1_Receivables",
+        "parentNumber": "1200",
+        "type": "Receivables"
+      },
+      "creditedAccount": {
+        "name": "Liabilities for Reservation MXETGHPM-1 (7%)",
+        "number": "MXETGHPM-1_Liabilities/Reduced:7.00",
+        "parentNumber": "3000",
+        "type": "Liabilities"
+      },
+      "command": "PostCharge",
+      "currency": "EUR",
+      "grossAmount": -114.02,
+      "netAmount": -106.56074766,
+      "taxes": [
+        {
+          "type": "Reduced",
+          "percent": 7,
+          "amount": -7.45925234
+        }
+      ],
+      "receipt": {
+        "type": "Reservation",
+        "number": "MXETGHPM-1-V0"
+      },
+      "sourceEntryNumber": "000000019",
+      "reference": "MXETGHPM-1",
+      "referenceType": "Guest"
+    },
+    {
+      "timestamp": "2026-10-21T11:45:41Z",
+      "date": "2026-10-22",
+      "debitedAccount": {
+        "name": "Receivables for Reservation MXETGHPM-1",
+        "number": "MXETGHPM-1_Receivables",
+        "parentNumber": "1200",
+        "type": "Receivables"
+      },
+      "creditedAccount": {
+        "name": "Liabilities for Reservation MXETGHPM-1 (19%)",
+        "number": "MXETGHPM-1_Liabilities/Normal:19.00",
+        "parentNumber": "3000",
+        "type": "Liabilities"
+      },
+      "command": "PostCharge",
+      "currency": "EUR",
+      "grossAmount": -19.98,
+      "netAmount": -16.78991597,
+      "taxes": [
+        {
+          "type": "Normal",
+          "percent": 19,
+          "amount": -3.19008403
+        }
+      ],
+      "receipt": {
+        "type": "Reservation",
+        "number": "MXETGHPM-1-V0"
+      },
+      "sourceEntryNumber": "000000018",
+      "reference": "MXETGHPM-1",
+      "referenceType": "Guest"
+    },
+    {
+      "timestamp": "2026-10-21T11:45:41Z",
+      "date": "2026-10-22",
+      "debitedAccount": {
+        "name": "Receivables for Reservation MXETGHPM-1",
+        "number": "MXETGHPM-1_Receivables",
+        "parentNumber": "1200",
+        "type": "Receivables"
+      },
+      "creditedAccount": {
+        "name": "Revenues Accommodation (7%)",
+        "number": "RevenueAccommodation_Reduced:7.00",
+        "parentNumber": "5000",
+        "type": "Revenues"
+      },
+      "command": "PostCharge",
+      "currency": "EUR",
+      "grossAmount": 114.02,
+      "netAmount": 106.56074766,
+      "taxes": [
+        {
+          "type": "Reduced",
+          "percent": 7,
+          "amount": 7.45925234
+        }
+      ],
+      "receipt": {
+        "type": "Reservation",
+        "number": "MXETGHPM-1-V0"
+      },
+      "sourceEntryNumber": "000000015",
+      "reference": "MXETGHPM-1",
+      "referenceType": "Guest"
+    },
+    {
+      "timestamp": "2026-10-21T11:45:41Z",
+      "date": "2026-10-22",
+      "debitedAccount": {
+        "name": "Receivables for Reservation MXETGHPM-1",
+        "number": "MXETGHPM-1_Receivables",
+        "parentNumber": "1200",
+        "type": "Receivables"
+      },
+      "creditedAccount": {
+        "name": "Revenues Food and beverages (19%)",
+        "number": "RevenueFoodAndBeverages_Normal:19.00",
+        "parentNumber": "5000",
+        "type": "Revenues"
+      },
+      "command": "PostCharge",
+      "currency": "EUR",
+      "grossAmount": 19.98,
+      "netAmount": 16.78991597,
+      "taxes": [
+        {
+          "type": "Normal",
+          "percent": 19,
+          "amount": 3.19008403
+        }
+      ],
+      "receipt": {
+        "type": "Reservation",
+        "number": "MXETGHPM-1-V0"
+      },
+      "sourceEntryNumber": "000000014",
+      "reference": "MXETGHPM-1",
+      "referenceType": "Guest"
+    }
+  ]
+}

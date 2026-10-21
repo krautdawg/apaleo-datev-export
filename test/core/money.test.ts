@@ -1,5 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { SubCentAmountError, decimalToCents, formatCents, toCents } from '../../src/core/money.js';
+import {
+  SubCentAmountError,
+  compareDecimals,
+  decimalToCents,
+  formatCents,
+  negateDecimal,
+  normaliseDecimal,
+  sumDecimals,
+  toCents,
+} from '../../src/core/money.js';
 
 describe('toCents', () => {
   it('converts a gross amount of 107.1 to 10710 cents', () => {
@@ -65,5 +74,44 @@ describe('formatCents', () => {
     [0, '0.00'],
   ])('formats %d as %s', (cents, text) => {
     expect(formatCents(cents)).toBe(text);
+  });
+});
+
+describe('exact decimals', () => {
+  /** apaleo's precise taxes of the eight 7 % revenue lines of the recorded BER day 2026-10-21. */
+  const BER_REVENUE_TAXES_7 = ['7.45794393', '-0.65420561', '8.11214953', '7.45925234', '5.4953271', '2.51214953', '3.06168224', '3.92523364'];
+
+  it('adds the eight 7 % taxes of the BER day exactly: 37.3695327, which rounds to 37.37', () => {
+    const precise = sumDecimals(BER_REVENUE_TAXES_7);
+    expect(precise).toBe('37.3695327');
+    expect(decimalToCents(precise)).toBe(3737);
+    // The same taxes rounded per line add up to one cent more.
+    expect(BER_REVENUE_TAXES_7.reduce((sum, tax) => sum + decimalToCents(tax), 0)).toBe(3738);
+  });
+
+  it('is exact where floating-point addition is not', () => {
+    expect(0.1 + 0.2).not.toBe(0.3);
+    expect(sumDecimals(['0.1', '0.2'])).toBe('0.3');
+    expect(sumDecimals(['14.9', '-12.5210084', '-2.3789916'])).toBe('0');
+  });
+
+  it.each([
+    ['1e-7', '0.0000001'],
+    ['-2e-08', '-0.00000002'],
+    ['12.50', '12.5'],
+    ['114', '114'],
+    ['-0.0', '0'],
+    ['1.5e2', '150'],
+  ])('writes %s plainly as %s', (value, text) => {
+    expect(normaliseDecimal(value)).toBe(text);
+  });
+
+  it('sums nothing to 0, negates and compares', () => {
+    expect(sumDecimals([])).toBe('0');
+    expect(negateDecimal('-0.65420561')).toBe('0.65420561');
+    expect(negateDecimal('0')).toBe('0');
+    expect(compareDecimals('0.005', '0.00500000')).toBe(0);
+    expect(compareDecimals('0.0050001', '0.005')).toBe(1);
+    expect(compareDecimals('-1', '0.5')).toBe(-1);
   });
 });

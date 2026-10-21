@@ -1,6 +1,7 @@
 import type { z } from 'zod';
 import type { LocalDate } from '../../core/date.js';
-import { toCents } from '../../core/money.js';
+import { REPORT_PROBLEM_HINT } from '../../core/errors.js';
+import { compareDecimals, decimalToCents, negateDecimal, normaliseDecimal, sumDecimals, toCents } from '../../core/money.js';
 import type {
   AccountRef,
   AccountTotals,
@@ -18,15 +19,46 @@ import type {
   exportTransaction,
   propertyList,
 } from './schemas.js';
+import { ApaleoError } from './errors.js';
 
 export const SOURCE_NAME = 'apaleo';
 
 type ExportTransaction = z.output<typeof exportTransaction>;
 
-/** Converts one export line to the canonical ledger line; amounts must be whole cents. */
+/** Gross may differ from net plus taxes by at most this much (a consistency guard, not a rounding tolerance). */
+const MAX_GROSS_DIFFERENCE = '0.005';
+
+/**
+ * apaleo's precise amount as plain decimal text. `String(number)` is the
+ * shortest text that reads back as the same number: exact for apaleo's eight
+ * decimals at hotel amounts (the gross check catches anything else).
+ */
+function preciseText(amount: number): string {
+  return normaliseDecimal(String(amount));
+}
+
+/**
+ * Converts one export line to the canonical ledger line. The gross amount must
+ * be whole cents; net and tax amounts keep apaleo's decimals (up to eight on
+ * real data) and are rounded half away from zero for the cent fields. Fails
+ * when gross differs from net plus the taxes by more than half a cent.
+ */
 export function toLedgerLine(item: ExportTransaction, where: string): LedgerLine {
-  const cents = (amount: number, field: string) =>
-    toCents(amount, `apaleo ${where}, source entry ${item.sourceEntryNumber}, ${field}`);
+  const entry = `apaleo ${where}, source entry ${item.sourceEntryNumber}`;
+  const grossCents = toCents(item.grossAmount, `${entry}, grossAmount`);
+  const netPrecise = preciseText(item.netAmount);
+  const taxes = (item.taxes ?? []).map((tax) => {
+    const amountPrecise = preciseText(tax.amount);
+    return { vatType: tax.type, percent: tax.percent, amountPrecise, amountCents: decimalToCents(amountPrecise) };
+  });
+  const gross = preciseText(item.grossAmount);
+  const difference = sumDecimals([gross, negateDecimal(netPrecise), ...taxes.map((tax) => negateDecimal(tax.amountPrecise))]);
+  if (compareDecimals(difference.replace(/^-/, ''), MAX_GROSS_DIFFERENCE) > 0) {
+    throw new ApaleoError(
+      `${entry}: gross ${gross} is not net ${netPrecise} plus the taxes ${taxes.map((tax) => tax.amountPrecise).join(' + ') || '(none)'} ` +
+        `(difference ${difference}). ${REPORT_PROBLEM_HINT}`,
+    );
+  }
   const receipt: LedgerLine['receipt'] = { number: item.receipt.number };
   if (item.receipt.type !== undefined) receipt.type = item.receipt.type;
   return {
@@ -36,13 +68,10 @@ export function toLedgerLine(item: ExportTransaction, where: string): LedgerLine
     credit: toAccountRef(item.creditedAccount),
     command: item.command,
     currency: item.currency,
-    grossCents: cents(item.grossAmount, 'grossAmount'),
-    netCents: cents(item.netAmount, 'netAmount'),
-    taxes: (item.taxes ?? []).map((tax, i) => ({
-      vatType: tax.type,
-      percent: tax.percent,
-      amountCents: cents(tax.amount, `taxes[${i}].amount`),
-    })),
+    grossCents,
+    netPrecise,
+    netCents: decimalToCents(netPrecise),
+    taxes,
     receipt,
     reference: item.reference,
     referenceType: item.referenceType,
