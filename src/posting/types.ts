@@ -40,12 +40,21 @@ export interface DatevAccountTotal {
   balanceCents: number;
 }
 
-/** Revenue booked at one DATEV VAT rate, signed (allowances reduce it), with the VAT DATEV will compute. */
-export interface RevenueTotal {
+/**
+ * Revenue or deposits booked at one DATEV VAT rate, signed (allowances and
+ * releases reduce it), with the VAT DATEV will compute booking by booking and
+ * the precise VAT apaleo charged on the same lines.
+ */
+export interface VatTotal {
   ratePercent: number;
   grossCents: number;
+  /** Sum of DATEV's VAT per booking. */
   vatCents: number;
+  /** Sum of apaleo's precise taxes, as decimal text. */
+  apaleoVat: string;
 }
+
+export type RevenueTotal = VatTotal;
 
 /** Payments received on one DATEV clearing account, signed (refunds reduce it). */
 export interface PaymentTotal {
@@ -56,6 +65,7 @@ export interface PaymentTotal {
 export interface SkippedTotal {
   reason: SkipReason;
   lines: number;
+  /** Sum of the absolute gross amounts (the basis of `E-CONSERVATION`). */
   grossCents: number;
 }
 
@@ -67,11 +77,16 @@ export interface FindingCount {
 /** Totals of one posting run, all in cents. */
 export interface PostingSummary {
   accounts: DatevAccountTotal[];
-  revenueByRate: RevenueTotal[];
+  revenueByRate: VatTotal[];
+  /** Deposits (Liabilities) per VAT rate: received minus released. */
+  depositVatByRate: VatTotal[];
   /** City tax, second city tax and guest levies, signed. */
   cityTaxCents: number;
   payments: PaymentTotal[];
-  deposits: { receivedCents: number; releasedCents: number };
+  /** Classified by side and sign (`depositMovement`), unsigned; refunds (paid back via a payment) are part of the released amount. */
+  deposits: { receivedCents: number; releasedCents: number; refundedCents: number };
+  /** Net movement on accounts receivable (collective debtor): debits positive. */
+  accountsReceivableCents: number;
   skipped: SkippedTotal[];
   /** Sum of the one-cent differences (DATEV's VAT minus apaleo's) reported as `W-VAT-ROUNDING`. */
   roundingCents: number;

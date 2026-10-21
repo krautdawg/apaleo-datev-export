@@ -25,28 +25,28 @@
 
 ## 4. Posting (defects 5, 7, 9, 6 summary part)
 
-- [ ] 4.1 Deposit classification by side and sign with `receivedCents`, `releasedCents`, `refundedCents`; tests for the negative-charge release, the refund and the 0 % overpayment line
-- [ ] 4.2 Accounts-receivable movement in the summary; test 114.00 on the BER day
-- [ ] 4.3 Skipped totals unsigned; test 6 lines / 331.60 on the BER day
-- [ ] 4.4 Per-rate VAT comparison in the summary (revenue and deposits): DATEV VAT, apaleo precise VAT, difference; tests with the BER values (37.38/37.37, 7.57/7.56, 14.26/14.26, 3.19/3.19)
-- [ ] 4.5 German Buchungstext per design decision 10 (revenue group labels with rate, deposit cases with rate, payment labels, `Forderung an Debitor`); unit tests per case, the `Müller, Hans` test kept, and the "no English words" test on the BER day
-- [ ] 4.6 Update `test/posting/fixture-month.test.ts` and the BSP expectations for the new texts, deposits and skipped totals, with the arithmetic in comments
+- [x] 4.1 Deposit classification by side and sign with `receivedCents`, `releasedCents`, `refundedCents`; tests for the negative-charge release, the refund and the 0 % overpayment line
+- [x] 4.2 Accounts-receivable movement in the summary; test 114.00 on the BER day
+- [x] 4.3 Skipped totals unsigned; test 6 lines / 331.60 on the BER day
+- [x] 4.4 Per-rate VAT comparison in the summary (revenue and deposits): DATEV VAT, apaleo precise VAT, difference; tests with the BER values (37.38/37.37, 7.57/7.56, 14.26/14.26, 3.19/3.19)
+- [x] 4.5 German Buchungstext per design decision 10 (revenue group labels with rate, deposit cases with rate, payment labels, `Forderung an Debitor`); unit tests per case, the `Müller, Hans` test kept, and the "no English words" test on the BER day
+- [x] 4.6 Update `test/posting/fixture-month.test.ts` and the BSP expectations for the new texts, deposits and skipped totals, with the arithmetic in comments
 
 ## 5. Export checks and output (defects 4, 6, 8)
 
-- [ ] 5.1 Rewrite `compareAggregates` per design decision 8 (balance, leaf global vs main account, net for Revenues/Liabilities, VAT accounts from precise taxes); unit tests on BER and VIE for 2026-10-21 and 2026-10-22, all accounts matching
-- [ ] 5.2 Rewrite the BSP `aggregate-daily` fixtures in the real shape (leaf global accounts, guest parents, balances) and update `test/core/aggregates.test.ts`
-- [ ] 5.3 `W-AGGREGATE-DIFF` message with both balances and the basis; test with one changed amount
-- [ ] 5.4 `E-VAT-TOTAL` message with apaleo's precise total and the line-rounding difference; check stays cent-exact on rounded per-line tax; tests for "line rounding is not an error" and "roundings at another rate"
-- [ ] 5.5 `src/export/summary.ts`: VAT comparison tables with the explaining sentence, deposits received/released/refunded, AR, skipped `gross (unsigned)`; dry-run and protocol tests
-- [ ] 5.6 Manifest: `amountTotal`, `sollTotal` and `habenTotal` all the sum of booking amounts; update `ManifestEntry` docs and `test/golden/export/manifest.json`
-- [ ] 5.7 Full-pipeline regression test on BER 2026-10-21 (`export` with `checks.aggregates: true`, fake clock after the day): one file, no `E-` and no `W-AGGREGATE-DIFF`, 35 lines / 29 bookings / 6 skipped, all hand-checked totals, writer validation passes
-- [ ] 5.8 VIE regression test: no parse error, `E-UNMAPPED` for the 13/10/20 % accounts
+- [x] 5.1 Rewrite `compareAggregates` per design decision 8 (balance, leaf global vs main account, net for Revenues/Liabilities, VAT accounts from precise taxes); unit tests on BER and VIE for 2026-10-21 and 2026-10-22, all accounts matching
+- [x] 5.2 Rewrite the BSP `aggregate-daily` fixtures in the real shape (leaf global accounts, guest parents, balances) and update `test/core/aggregates.test.ts`
+- [x] 5.3 `W-AGGREGATE-DIFF` message with both balances and the basis; test with one changed amount
+- [x] 5.4 `E-VAT-TOTAL` message with apaleo's precise total and the line-rounding difference; check stays cent-exact on rounded per-line tax; tests for "line rounding is not an error" and "roundings at another rate"
+- [x] 5.5 `src/export/summary.ts`: VAT comparison tables with the explaining sentence, deposits received/released/refunded, AR, skipped `gross (unsigned)`; dry-run and protocol tests
+- [x] 5.6 Manifest: `amountTotal`, `sollTotal` and `habenTotal` all the sum of booking amounts; update `ManifestEntry` docs and `test/golden/export/manifest.json`
+- [x] 5.7 Full-pipeline regression test on BER 2026-10-21 (`export` with `checks.aggregates: true`, fake clock after the day): one file, no `E-` and no `W-AGGREGATE-DIFF`, 35 lines / 29 bookings / 6 skipped, all hand-checked totals, writer validation passes
+- [x] 5.8 VIE regression test: no parse error, `E-UNMAPPED` for the 13/10/20 % accounts
 
 ## 6. live-smoke (defects 4, 5, 11)
 
-- [ ] 6.1 Empty day: `WARN  ledger` line and the "nothing about the postings was checked" result, exit 0; test with a 204 day
-- [ ] 6.2 Deposit question counts received/released/refunded with and without `taxes[]`; aggregate table by balance with "N of M accounts match"; test on the recorded BER day (6 received, 5 released of which 1 refunded, 18 of 18)
+- [x] 6.1 Empty day: `WARN  ledger` line and the "nothing about the postings was checked" result, exit 0; test with a 204 day
+- [x] 6.2 Deposit question counts received/released/refunded with and without `taxes[]`; aggregate table by balance with "N of M accounts match"; test on the recorded BER day (6 received, 5 released of which 1 refunded, 18 of 18)
 
 ## 7. Docs and changelog
 

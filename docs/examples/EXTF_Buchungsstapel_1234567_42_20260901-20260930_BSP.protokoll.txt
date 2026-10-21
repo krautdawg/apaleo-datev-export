@@ -13,10 +13,14 @@ Totals per DATEV account:
   8400       0.00   29.80   -29.80
   10000    115.00    0.00   115.00
 
-Revenue and VAT per rate (VAT as DATEV computes it):
-  rate   gross    VAT
-  7 %   664.00  43.44
-  19 %   29.80   4.76
+Revenue and VAT per rate:
+  7 %: gross 664.00, DATEV VAT 43.44, apaleo VAT 43.44, difference 0.00 (apaleo precise 43.44)
+  19 %: gross 29.80, DATEV VAT 4.76, apaleo VAT 4.76, difference 0.00 (apaleo precise 4.76)
+
+Deposits and their VAT per rate (received minus released):
+  7 %: gross 0.00, DATEV VAT 0.00, apaleo VAT 0.00, difference 0.00 (apaleo precise 0)
+
+DATEV computes the VAT booking by booking and rounds each to the cent; apaleo's VAT is the precise sum of its lines, rounded once. A difference of a few cents is this rounding, not an error.
 
 City tax: 15.00
 
@@ -25,19 +29,20 @@ Payments per clearing account:
   1000      23.80
   1360     570.00
 
-Deposits: received 350.00, released 350.00
+Deposits: received 350.00, released 350.00, of it refunded 0.00
+Accounts receivable (collective debtor, Soll positive): 115.00
 VAT rounding differences: 0.00
 
 Skipped lines:
-  reason                                            lines  gross
-  apaleo VAT account line (DATEV computes the VAT)      2  19.62
-  both sides on the same DATEV account                  1   5.00
+  reason                                            lines  gross (unsigned)
+  apaleo VAT account line (DATEV computes the VAT)      2             19.62
+  both sides on the same DATEV account                  1              5.00
 
 Findings:
   none
 
 File: EXTF_Buchungsstapel_1234567_42_20260901-20260930_BSP.csv
-SHA-256: 507f5fd4962e6f768e30dfb36c45001b8279fdb367655ecee5bdd9a666f1e81f
+SHA-256: 90700c47e01362eefe07f94ec701e8da465024cb46193a3b9519413484158067
 Mapping SHA-256: 57ab11708d32823807fe2b973c57b2af3ebe62abee8bd1d852eba4e0327df384
 Tool: apaleo-datev 0.1.0
 Created: 2026-10-20T08:00:00.000Z

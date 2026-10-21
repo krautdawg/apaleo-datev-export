@@ -32,8 +32,13 @@ export const liveSmoke: Command = {
     const out = ctx.stdout;
     out.write(`apaleo live smoke test for property ${propertyId}. It reads only and writes no files.\n\n`);
     try {
-      const day = await runSteps(source, propertyId, dateFlag, ctx.now(), out);
-      out.write(`\nResult: every required step passed for business day ${day}.\n`);
+      const { day, lines } = await runSteps(source, propertyId, dateFlag, ctx.now(), out);
+      out.write(
+        lines === 0
+          ? `\nResult: passed, but ${day} has no bookings, so nothing about the postings was checked; ` +
+              'run again with --date <a day with bookings>.\n'
+          : `\nResult: every required step passed for business day ${day}.\n`,
+      );
       return EXIT_OK;
     } catch (error) {
       if (!(error instanceof StepFailed)) throw error;
@@ -54,25 +59,39 @@ async function runSteps(
   dateFlag: LocalDate | undefined,
   now: Date,
   out: OutputStream,
-): Promise<LocalDate> {
+): Promise<{ day: LocalDate; lines: number }> {
   await step(out, 'login', () => source.authenticate(), () => 'access token received');
   const property = await step(out, 'property', () => findProperty(source, propertyId), describeProperty);
   const day = dateFlag ?? previousDay(previousDay(localDateIn(now, property.timeZone)));
   const accounts = await step(out, 'chart of accounts', () => source.getChartOfAccounts(propertyId), (a) => `${a.length} accounts`);
   out.write(countsByType(accounts));
-  const lines = await step(out, 'ledger', () => source.getLedger(propertyId, day, nextDay(day)), (l) => `${l.length} lines on ${day}`);
+  const lines = await step(
+    out,
+    'ledger',
+    () => source.getLedger(propertyId, day, nextDay(day)),
+    (l) => `${l.length} lines on ${day}`,
+    (l) => (l.length === 0 ? `no lines on ${day}` : undefined),
+  );
   out.write(totalsByType(lines));
 
   const chart = new ChartIndex(accounts);
   const comparison = await aggregateStep(source, propertyId, day, lines, chart, out);
   out.write(renderLiveAnswers(lines, chart, comparison));
-  return day;
+  return { day, lines: lines.length };
 }
 
-async function step<T>(out: OutputStream, label: string, run: () => Promise<T>, describe: (value: T) => string): Promise<T> {
+/** Runs one step and prints `OK`, or `WARN` when `warn` gives a message for the value, or `FAIL`. */
+async function step<T>(
+  out: OutputStream,
+  label: string,
+  run: () => Promise<T>,
+  describe: (value: T) => string,
+  warn: (value: T) => string | undefined = () => undefined,
+): Promise<T> {
   try {
     const value = await run();
-    out.write(`OK    ${label}: ${describe(value)}\n`);
+    const warning = warn(value);
+    out.write(warning === undefined ? `OK    ${label}: ${describe(value)}\n` : `WARN  ${label}: ${warning}\n`);
     return value;
   } catch (error) {
     out.write(`FAIL  ${label}: ${(error as Error).message}\n`);
@@ -113,17 +132,18 @@ async function aggregateStep(
     return undefined;
   }
   const comparison = compareAggregates(totals, lines, chart);
-  out.write(`OK    aggregates: ${totals.accounts.length} main accounts\n`);
+  out.write(`OK    aggregates: ${totals.accounts.length} accounts\n`);
   const rows = comparison.map((c) => [
     c.account.number,
     c.account.type,
+    c.basis,
     ...pair(c.source),
-    ...pair(c.gross),
-    ...pair(c.net),
-    c.match,
+    formatCents(c.sourceBalanceCents),
+    formatCents(c.ledgerBalanceCents),
+    c.match ? 'yes' : 'NO',
   ]);
-  const head = ['account', 'type', 'apaleo debit', 'credit', 'gross debit', 'credit', 'net debit', 'credit', 'matches'];
-  out.write(formatTable([head, ...rows], [2, 3, 4, 5, 6, 7], '        '));
+  const head = ['account', 'type', 'basis', 'apaleo debit', 'credit', 'balance', 'ledger balance', 'matches'];
+  if (rows.length > 0) out.write(formatTable([head, ...rows], [3, 4, 5, 6], '        '));
   return comparison;
 }
 
@@ -158,16 +178,20 @@ function renderLiveAnswers(lines: LedgerLine[], chart: ChartIndex, comparison: A
   const a = answerLiveQuestions(lines, chart);
   const examples = a.outsideChart.examples.length > 0 ? ` (for example ${a.outsideChart.examples.join(', ')})` : '';
   const aggregates = comparison
-    ? ['gross', 'net', 'both', 'none'].map((m) => `${comparison.filter((c) => c.match === m).length} ${m}`).join(', ')
+    ? `${comparison.filter((c) => c.match).length} of ${comparison.length} accounts match`
     : 'not checked (permission missing)';
+  const deposits = (kind: keyof typeof a.deposits) => {
+    const { lines: count, withTaxes, withoutTaxes } = a.deposits[kind];
+    return `${count} ${kind} (${withTaxes} with taxes[], ${withoutTaxes} without)`;
+  };
   return [
     '',
     'Open questions about real apaleo data:',
     `  Accounts outside the chart: ${a.outsideChart.lines} lines use them; ${a.outsideChart.withParent} accounts with parentNumber, ${a.outsideChart.withoutParent} without${examples}`,
-    `  Deposit releases (debit Liabilities, credit Receivables): ${a.depositReleases.lines} lines, ${a.depositReleases.withTaxes} with taxes[], ${a.depositReleases.withoutTaxes} without`,
+    `  Deposit lines by side and sign: ${deposits('received')}; ${deposits('released')}, of them ${deposits('refunded')}`,
     `  PostPrepaymentVat lines: ${a.prepaymentVatLines}; lines on VatOnLiabilities accounts: ${a.vatOnLiabilitiesLines}`,
     `  Tax entries with percent 0 and amount 0: ${a.zeroTaxEntries.zero} of ${a.zeroTaxEntries.total}`,
-    `  Aggregates matching the ledger by main account: ${aggregates}`,
+    `  Aggregates against the ledger by balance: ${aggregates}`,
     '',
   ].join('\n');
 }

@@ -1,8 +1,11 @@
+import { depositMovement } from '../core/deposits.js';
 import type { Finding } from '../core/findings.js';
+import { sumDecimals } from '../core/money.js';
 import type { LedgerLine } from '../core/source.js';
+import type { ApaleoVat } from './apaleo-vat.js';
 import type { PostedSide } from './guard.js';
 import { datevVat } from './taxes.js';
-import { SKIP_REASONS, type PostedBooking, type PostingSummary, type SkipReason } from './types.js';
+import { SKIP_REASONS, type PostedBooking, type PostingSummary, type SkipReason, type VatTotal } from './types.js';
 
 /** DATEV account numbers in numeric order: shorter (G/L) before longer (personal) numbers. */
 const byNumber = (a: string, b: string) => a.length - b.length || a.localeCompare(b);
@@ -15,46 +18,62 @@ function creditedAmount(line: LedgerLine, types: ReadonlySet<string> | string): 
   return (has(line.credit.type) ? line.grossCents : 0) - (has(line.debit.type) ? line.grossCents : 0);
 }
 
+interface VatEntry {
+  gross: number;
+  vat: number;
+  apaleo: string[];
+}
+
 /** Collects the totals of a posting run while bookings are produced. */
 export class SummaryBuilder {
   private readonly accounts = new Map<string, { soll: number; haben: number }>();
-  private readonly revenue = new Map<number, { gross: number; vat: number }>();
+  private readonly revenue = new Map<number, VatEntry>();
+  private readonly depositVat = new Map<number, VatEntry>();
   private readonly payments = new Map<string, number>();
   private readonly skipped = new Map<SkipReason, { lines: number; gross: number }>();
   private cityTax = 0;
-  private received = 0;
-  private released = 0;
+  private readonly deposits = { receivedCents: 0, releasedCents: 0, refundedCents: 0 };
+  private accountsReceivable = 0;
   private rounding = 0;
 
-  addBooking(line: LedgerLine, booking: PostedBooking, debit: PostedSide, credit: PostedSide, roundingCents: number): void {
+  /** `apaleoVat` is what `apaleoVatOf` gives for the line. */
+  addBooking(line: LedgerLine, booking: PostedBooking, debit: PostedSide, credit: PostedSide, roundingCents: number, apaleoVat: readonly ApaleoVat[]): void {
     const [soll, haben] = booking.side === 'S' ? [booking.konto, booking.gegenkonto] : [booking.gegenkonto, booking.konto];
     this.account(soll).soll += booking.amountCents;
     this.account(haben).haben += booking.amountCents;
     this.rounding += roundingCents;
 
-    const revenue = credit.ref.type === 'Revenues' ? credit : debit.ref.type === 'Revenues' ? debit : undefined;
-    if (revenue) {
-      const gross = creditedAmount(line, 'Revenues');
-      const rate = revenue.vat ? revenue.rate : 0;
-      const entry = this.revenue.get(rate) ?? { gross: 0, vat: 0 };
+    const side = (type: string) => (credit.ref.type === type ? credit : debit.ref.type === type ? debit : undefined);
+    const revenue = side('Revenues');
+    const deposit = revenue ? undefined : side('Liabilities');
+    const vatSide = revenue ?? deposit;
+    if (vatSide) {
+      const gross = creditedAmount(line, vatSide.ref.type);
+      const rate = vatSide.vat ? vatSide.rate : 0;
+      const totals = revenue ? this.revenue : this.depositVat;
+      const entry = totals.get(rate) ?? { gross: 0, vat: 0, apaleo: [] };
       entry.gross += gross;
       entry.vat += datevVat(gross, rate);
-      this.revenue.set(rate, entry);
+      entry.apaleo.push(...apaleoVat.map((vat) => vat.precise));
+      totals.set(rate, entry);
     }
     this.cityTax += creditedAmount(line, CITY_TAX_TYPES);
-    for (const side of [debit, credit]) {
-      if (side.ref.type !== 'Payments') continue;
-      const signed = side === debit ? line.grossCents : -line.grossCents;
-      this.payments.set(side.row.datevAccount, (this.payments.get(side.row.datevAccount) ?? 0) + signed);
+    for (const payment of [debit, credit]) {
+      if (payment.ref.type !== 'Payments') continue;
+      const signed = payment === debit ? line.grossCents : -line.grossCents;
+      this.payments.set(payment.row.datevAccount, (this.payments.get(payment.row.datevAccount) ?? 0) + signed);
     }
-    if (line.credit.type === 'Liabilities') this.received += line.grossCents;
-    if (line.debit.type === 'Liabilities') this.released += line.grossCents;
+    const movement = depositMovement(line);
+    if (movement?.direction === 'increase') this.deposits.receivedCents += movement.cents;
+    if (movement?.direction === 'decrease') this.deposits.releasedCents += movement.cents;
+    if (movement?.direction === 'decrease' && movement.viaPayment) this.deposits.refundedCents += movement.cents;
+    this.accountsReceivable -= creditedAmount(line, 'AccountsReceivable');
   }
 
   addSkipped(reason: SkipReason, line: LedgerLine): void {
     const entry = this.skipped.get(reason) ?? { lines: 0, gross: 0 };
     entry.lines += 1;
-    entry.gross += line.grossCents;
+    entry.gross += Math.abs(line.grossCents);
     this.skipped.set(reason, entry);
   }
 
@@ -65,12 +84,12 @@ export class SummaryBuilder {
       accounts: [...this.accounts]
         .sort(([a], [b]) => byNumber(a, b))
         .map(([account, { soll, haben }]) => ({ account, sollCents: soll, habenCents: haben, balanceCents: soll - haben })),
-      revenueByRate: [...this.revenue]
-        .sort(([a], [b]) => a - b)
-        .map(([ratePercent, { gross, vat }]) => ({ ratePercent, grossCents: gross, vatCents: vat })),
+      revenueByRate: vatTotals(this.revenue),
+      depositVatByRate: vatTotals(this.depositVat),
       cityTaxCents: this.cityTax,
       payments: [...this.payments].sort(([a], [b]) => byNumber(a, b)).map(([account, cents]) => ({ account, cents })),
-      deposits: { receivedCents: this.received, releasedCents: this.released },
+      deposits: { ...this.deposits },
+      accountsReceivableCents: this.accountsReceivable,
       skipped: SKIP_REASONS.flatMap((reason) => {
         const entry = this.skipped.get(reason);
         return entry ? [{ reason, lines: entry.lines, grossCents: entry.gross }] : [];
@@ -88,4 +107,10 @@ export class SummaryBuilder {
     }
     return entry;
   }
+}
+
+function vatTotals(entries: ReadonlyMap<number, VatEntry>): VatTotal[] {
+  return [...entries]
+    .sort(([a], [b]) => a - b)
+    .map(([ratePercent, { gross, vat, apaleo }]) => ({ ratePercent, grossCents: gross, vatCents: vat, apaleoVat: sumDecimals(apaleo) }));
 }

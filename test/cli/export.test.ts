@@ -143,10 +143,22 @@ describe('apaleo-datev export', () => {
     const setup = exportSetup();
     expect(await runCli(['export', '--month', '2026-09', '--property', BSP, '--dry-run'], setup.ctx)).toBe(0);
     const out = setup.ctx.out();
-    for (const text of ['Totals per DATEV account:', 'Revenue and VAT per rate', 'City tax: 15.00', 'Payments per clearing account:', 'Deposits: received 350.00, released 350.00', 'Skipped lines:', 'Findings:']) {
+    for (const text of [
+      'Totals per DATEV account:',
+      'Revenue and VAT per rate',
+      'Deposits and their VAT per rate',
+      'City tax: 15.00',
+      'Payments per clearing account:',
+      'Deposits: received 350.00, released 350.00, of it refunded 0.00',
+      'Accounts receivable (collective debtor, Soll positive): 115.00',
+      'gross (unsigned)',
+      'Skipped lines:',
+      'Findings:',
+    ]) {
       expect(out).toContain(text);
     }
-    expect(out).toMatch(/^ {2}7 % +664\.00 +43\.44$/m);
+    expect(out).toContain('  7 %: gross 664.00, DATEV VAT 43.44, apaleo VAT 43.44, difference 0.00');
+    expect(out).toContain('DATEV computes the VAT booking by booking and rounds each to the cent');
     expect(out).toContain(`File: a real run writes exports/BSP/2026-09/${FILE}`);
     expect(out).toContain('Result: dry run, nothing written');
     expect(readdirSync(setup.ctx.cwd).sort()).toEqual(['apaleo-datev.config.yaml', 'mapping-BSP.csv']);

@@ -55,7 +55,8 @@ describe('deposit release with taxes', () => {
     const { bookings, findings, summary } = post([line]);
     expect(findings).toEqual([]);
     expect(bookings).toEqual([expect.objectContaining({ amountCents: 20_000, konto: '1410', gegenkonto: '1711', side: 'H' })]);
-    expect(summary.deposits).toEqual({ receivedCents: 0, releasedCents: 20_000 });
+    expect(summary.deposits).toEqual({ receivedCents: 0, releasedCents: 20_000, refundedCents: 0 });
+    expect(summary.depositVatByRate).toEqual([{ ratePercent: 7, grossCents: -20_000, vatCents: -1_308, apaleoVat: '-13.08' }]);
   });
 });
 

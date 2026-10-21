@@ -1,15 +1,17 @@
 import type { ChartIndex } from '../core/chart.js';
+import { depositMovement } from '../core/deposits.js';
 import type { PostingConfig } from '../core/config.js';
 import type { AccountRef, LedgerLine } from '../core/source.js';
 import type { MappingRow } from '../mapping/index.js';
 
-/** The German label of an apaleo command, the first word of the Buchungstext. */
+/**
+ * The German label of an apaleo command, the first word of the Buchungstext
+ * of a line that is neither revenue, deposit, payment, debtor transfer nor bad
+ * debt (for example a move between two guest folios).
+ */
 const COMMAND_LABELS: Readonly<Record<string, string>> = {
-  PostCharge: 'Erlös',
-  PostPayment: 'Zahlung',
-  PostPrepayment: 'Anzahlung',
   MoveLineItem: 'Umbuchung',
-  PostToAccountsReceivables: 'Forderung',
+  PostToAccountsReceivables: 'Forderung an Debitor',
   PostToLossOfAccountsReceivables: 'Forderungsverlust',
   PostPrepaymentVat: 'USt Anzahlung',
 };
@@ -25,6 +27,32 @@ const GUEST_ACCOUNT_LABELS: Readonly<Record<string, string>> = {
   AccountsReceivable: 'Debitor',
   Liabilities: 'Anzahlung Gast',
 };
+
+/** apaleo's standard revenue groups (the parent of `RevenueAccommodation_Reduced:7.00`). */
+const REVENUE_GROUPS: Readonly<Record<string, string>> = {
+  RevenueAccommodation: 'Logis',
+  RevenueFoodAndBeverages: 'Speisen und Getränke',
+  RevenueNoShow: 'No-Show',
+  RevenueCancellationFees: 'Stornogebühr',
+  RevenueOther: 'Sonstige Erlöse',
+};
+
+/** apaleo's generic English payment-method names; card brands keep their name. */
+const PAYMENT_LABELS: Readonly<Record<string, string>> = {
+  'Cash Payment': 'Bar',
+  Cash: 'Bar',
+  'Cash and ATM': 'Bar',
+  'Bank Transfer': 'Überweisung',
+  'Direct Debit': 'Lastschrift',
+  'Voucher Payment': 'Gutschein',
+  'Other Payment': 'Sonstige',
+  'Credit Card Payment': 'Kreditkarte',
+  'Online banking': 'Onlinebanking',
+  'Open Invoice': 'Offene Rechnung',
+  Cheque: 'Scheck',
+};
+const PAYMENT_SUFFIX = / (?:Credit Card Payment|Card Payment|Payment)$/;
+const BRAND_SPELLING: Readonly<Record<string, string>> = { MasterCard: 'Mastercard', GiroCard: 'Girocard' };
 
 const BUCHUNGSTEXT_LENGTH = 60;
 
@@ -53,15 +81,66 @@ export function accountLabel(ref: AccountRef, chart: ChartIndex): string {
 }
 
 /**
- * `<command label> <account label>`, cut to the 60 characters DATEV allows. When
- * the account label already starts with the command label (`Anzahlung Gast` on a
- * prepayment), it stands alone.
+ * The German label of a revenue account: apaleo's standard groups by their
+ * German name and the rate (`Logis 7 %`), other accounts by their own name
+ * without apaleo's English prefix `Revenues `.
  */
-export function buchungstext(line: LedgerLine, labelled: AccountRef, chart: ChartIndex): string {
+export function revenueLabel(ref: AccountRef, chart: ChartIndex, rate: number): string {
+  const numbers = [ref.number.split(/[_:]/)[0] ?? ref.number];
+  let parent = chart.find(ref.number, ref.type)?.parentNumber ?? ref.parentNumber;
+  while (parent !== undefined && !numbers.includes(parent)) {
+    numbers.push(parent);
+    parent = chart.find(parent, ref.type)?.parentNumber;
+  }
+  const group = numbers.map((number) => REVENUE_GROUPS[number]).find((label) => label !== undefined);
+  return group ? `${group} ${rate} %` : ref.name.replace(/^Revenues\s+/, '');
+}
+
+/** A payment method in German: generic names translated, card brands kept (`Visa Debit Card Payment` → `Visa Debit`). */
+export function paymentLabel(name: string): string {
+  const fixed = PAYMENT_LABELS[name];
+  if (fixed) return fixed;
+  const label = name.replace(/^Payment by /, '').replace(PAYMENT_SUFFIX, '');
+  return Object.entries(BRAND_SPELLING).reduce((text, [from, to]) => text.replace(from, to), label) || 'Zahlung';
+}
+
+/**
+ * The Buchungstext (s10 design decision 10), German only and cut to the 60
+ * characters DATEV allows. It names the business case from the command, the
+ * sign and the account types, then a German label:
+ * - revenue: `Erlös` (credited, positive) or `Erlösminderung` + revenue label;
+ * - deposits, by side and sign: `Anzahlung` (via a payment), `Umbuchung
+ *   Anzahlung` (from a folio), `Auflösung Anzahlung` (against a folio),
+ *   `Erstattung Anzahlung` (paid back), each with the deposit's VAT rate;
+ * - payments: `Zahlung` or `Erstattung` + payment label;
+ * - `Forderung an Debitor`, `Forderungsverlust` with the rate;
+ * - else the command label + `accountLabel` of `labelled`.
+ * `rate` is the VAT rate of the booking (0 without VAT).
+ */
+export function buchungstext(line: LedgerLine, labelled: AccountRef, chart: ChartIndex, rate: number): string {
+  return businessText(line, labelled, chart, rate).slice(0, BUCHUNGSTEXT_LENGTH).trim();
+}
+
+function businessText(line: LedgerLine, labelled: AccountRef, chart: ChartIndex, rate: number): string {
+  const side = (type: string) =>
+    line.credit.type === type ? { ref: line.credit, credited: true } : line.debit.type === type ? { ref: line.debit, credited: false } : undefined;
+  const positive = line.grossCents > 0;
+  const revenue = side('Revenues');
+  if (revenue) return `${revenue.credited && positive ? 'Erlös' : 'Erlösminderung'} ${revenueLabel(revenue.ref, chart, rate)}`;
+  const deposit = depositMovement(line);
+  if (deposit) {
+    const label = deposit.direction === 'increase'
+      ? (deposit.viaPayment ? 'Anzahlung' : 'Umbuchung Anzahlung')
+      : (deposit.viaPayment ? 'Erstattung Anzahlung' : 'Auflösung Anzahlung');
+    return `${label} ${rate} %`;
+  }
+  const payment = side('Payments');
+  if (payment) return `${payment.credited === positive ? 'Erstattung' : 'Zahlung'} ${paymentLabel(payment.ref.name)}`;
+  if (side('AccountsReceivable') && side('Receivables')) return 'Forderung an Debitor';
+  if (side('LossOfAccountsReceivable')) return `Forderungsverlust ${rate} %`;
   const command = commandLabel(line.command);
   const account = accountLabel(labelled, chart);
-  const text = account.startsWith(`${command} `) ? account : `${command} ${account}`;
-  return text.slice(0, BUCHUNGSTEXT_LENGTH).trim();
+  return account.startsWith(`${command} `) ? account : `${command} ${account}`;
 }
 
 /** The receipt number when configured and present, else the reference. Never an account name. */

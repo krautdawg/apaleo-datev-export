@@ -27,7 +27,14 @@ export interface ManifestEntry {
   /** SHA-256 of the file without its header line, which carries the creation time. */
   bodySha256: string;
   bookings?: number;
-  /** Sum of the amounts booked with Soll and with Haben on Konto. */
+  /** Sum of all booking amounts of the file. */
+  amountTotal?: string;
+  /**
+   * Summe Soll and Summe Haben as the Kanzlei sees them after the import: DATEV
+   * adds each booking's amount once to Soll and once to Haben, so both equal
+   * `amountTotal`. (Before 0.1.1 they were the sums of the bookings with
+   * Soll/Haben-Kennzeichen S and H on Konto.)
+   */
   sollTotal?: string;
   habenTotal?: string;
   mappingSha256?: string;

@@ -403,7 +403,7 @@ describe('HTTP errors', () => {
 });
 
 describe('getAccountTotals', () => {
-  it('sends one request per business day and returns main accounts with a grand total', async () => {
+  it('sends one request per business day and returns the accounts with a grand total', async () => {
     const { source, ctx } = createFixtureSource();
     const days: LocalDate[] = ['2026-09-14', '2026-09-15', '2026-09-16'];
     const results = await Promise.all(days.map((day) => source.getAccountTotals(BSP, day)));
@@ -415,12 +415,23 @@ describe('getAccountTotals', () => {
       expect(totals.accounts.length).toBeGreaterThan(0);
       expect(totals.total.debited.value).toBe(totals.total.credited.value);
     }
-    expect(results[0]?.accounts.find((a) => a.account.number === '5000')).toEqual({
-      account: { number: '5000', name: 'Revenues', type: 'Revenues' },
+    expect(results[0]?.accounts.find((a) => a.account.number === '5011')).toEqual({
+      account: { number: '5011', name: 'Accommodation 7%', type: 'Revenues' },
       debited: { value: '0', currency: 'EUR' },
-      credited: { value: '138.8004', currency: 'EUR' },
-      balance: { value: '-138.8004', currency: 'EUR' },
+      credited: { value: '93.46', currency: 'EUR' },
+      balance: { value: '-93.46', currency: 'EUR' },
     });
+  });
+
+  it('reads the recorded BER aggregates of 2026-10-21: leaf global accounts and guest parents, precise amounts', async () => {
+    const { source } = createFixtureSource({ live: true });
+    const totals = await source.getAccountTotals('BER', '2026-10-21');
+    expect(totals.accounts).toHaveLength(18);
+    const balance = (number: string) => totals.accounts.find((a) => a.account.number === number)?.balance.value;
+    expect(balance('1107')).toBe('114.9');
+    expect(balance('RevenueAccommodation_Reduced:7.00')).toBe('-398.14953271');
+    expect(balance('Vat_Reduced:7.00')).toBe('-37.36953271');
+    expect(balance('3000')).toBe('-220.54692532');
   });
 
   it('keeps a precise amount of 123.4567 without a sub-cent error', async () => {

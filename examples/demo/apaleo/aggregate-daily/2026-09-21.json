@@ -2,39 +2,77 @@
   "aggregations": [
     {
       "account": {
-        "name": "Guest Receivables",
-        "number": "1200",
-        "type": "Receivables"
+        "name": "Accommodation 7%",
+        "number": "5011",
+        "type": "Revenues"
       },
       "creditedAmount": {
-        "amount": 200.0,
+        "amount": 186.92,
         "currency": "EUR"
       },
       "debitedAmount": {
-        "amount": 200.0,
+        "amount": 0,
         "currency": "EUR"
       },
       "balance": {
-        "amount": 0.0,
+        "amount": -186.92,
         "currency": "EUR"
       }
     },
     {
       "account": {
-        "name": "Revenues",
-        "number": "5000",
-        "type": "Revenues"
+        "name": "VAT 7%",
+        "number": "2007",
+        "type": "Vat"
       },
       "creditedAmount": {
-        "amount": 200.0,
+        "amount": 13.08,
         "currency": "EUR"
       },
       "debitedAmount": {
-        "amount": 0.0,
+        "amount": 0,
         "currency": "EUR"
       },
       "balance": {
-        "amount": -200.0,
+        "amount": -13.08,
+        "currency": "EUR"
+      }
+    },
+    {
+      "account": {
+        "name": "VAT on Liabilities 7%",
+        "number": "2107",
+        "type": "VatOnLiabilities"
+      },
+      "creditedAmount": {
+        "amount": 0,
+        "currency": "EUR"
+      },
+      "debitedAmount": {
+        "amount": 13.08,
+        "currency": "EUR"
+      },
+      "balance": {
+        "amount": 13.08,
+        "currency": "EUR"
+      }
+    },
+    {
+      "account": {
+        "name": "Guest Receivables",
+        "number": "1200",
+        "type": "Receivables"
+      },
+      "creditedAmount": {
+        "amount": 200,
+        "currency": "EUR"
+      },
+      "debitedAmount": {
+        "amount": 200,
+        "currency": "EUR"
+      },
+      "balance": {
+        "amount": 0,
         "currency": "EUR"
       }
     },
@@ -45,30 +83,30 @@
         "type": "Liabilities"
       },
       "creditedAmount": {
-        "amount": 0.0,
+        "amount": 0,
         "currency": "EUR"
       },
       "debitedAmount": {
-        "amount": 200.0,
+        "amount": 186.92,
         "currency": "EUR"
       },
       "balance": {
-        "amount": 200.0,
+        "amount": 186.92,
         "currency": "EUR"
       }
     }
   ],
   "total": {
     "creditedAmount": {
-      "amount": 400.0,
+      "amount": 400,
       "currency": "EUR"
     },
     "debitedAmount": {
-      "amount": 400.0,
+      "amount": 400,
       "currency": "EUR"
     },
     "balance": {
-      "amount": 0.0,
+      "amount": 0,
       "currency": "EUR"
     }
   }

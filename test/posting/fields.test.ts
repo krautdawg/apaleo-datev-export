@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ChartIndex } from '../../src/core/chart.js';
-import { accountLabel, commandLabel } from '../../src/posting/index.js';
+import { accountLabel, commandLabel, paymentLabel, revenueLabel } from '../../src/posting/index.js';
 import { ledgerLine, tax } from '../helpers/ledger.js';
 import { mappingRow } from '../helpers/mapping.js';
 import { ACCOUNTS, CHART, mappingWith, post } from '../helpers/posting.js';
@@ -27,26 +27,43 @@ describe('Belegfeld 1', () => {
 });
 
 describe('Buchungstext', () => {
-  it('is "Zahlung Gastforderung" for a payment crediting the guest folio "Müller, Hans"', () => {
+  it('starts with "Zahlung" and names the card, never the guest, for a payment crediting the folio "Müller, Hans"', () => {
     const [booking] = post([payment({ credit: ACCOUNTS.folio })]).bookings;
-    expect(booking?.buchungstext).toBe('Zahlung Gastforderung');
+    expect(booking?.buchungstext).toBe('Zahlung Visa');
     expect(booking?.buchungstext).not.toContain('Müller');
   });
 
-  it('names the VAT side for charges, else the credit side', () => {
-    const [charge, cityTax, payout] = post([
-      ledgerLine(),
-      ledgerLine({ credit: ACCOUNTS.cityTax, grossCents: 500, taxes: [] }),
-      ledgerLine({ debit: ACCOUNTS.accountsReceivable, credit: ACCOUNTS.receivables, command: 'PostToAccountsReceivables', taxes: [] }),
-    ]).bookings;
+  it('names revenue in German: "Erlös" plus the account, "Erlösminderung" for an allowance', () => {
+    const [charge, allowance] = post([ledgerLine(), ledgerLine({ grossCents: -1_000, taxes: [tax('Reduced', 7, -65)] })]).bookings;
     expect(charge?.buchungstext).toBe('Erlös Accommodation 7%');
-    expect(cityTax?.buchungstext).toBe('Erlös City Tax 0%');
-    expect(payout?.buchungstext).toBe('Forderung Gastforderung');
+    expect(allowance?.buchungstext).toBe('Erlösminderung Accommodation 7%');
   });
 
-  it('does not repeat the command label: a prepayment on a guest deposit is "Anzahlung Gast"', () => {
-    const line = ledgerLine({ debit: ACCOUNTS.visa, credit: ACCOUNTS.liabilities, command: 'PostPrepayment', grossCents: 20_000, taxes: [tax('Reduced', 7, 1_308)] });
-    expect(post([line]).bookings[0]?.buchungstext).toBe('Anzahlung Gast');
+  it('names a deposit by side and sign, with its rate', () => {
+    const prepayment = ledgerLine({ debit: ACCOUNTS.visa, credit: ACCOUNTS.liabilities, command: 'PostPrepayment', grossCents: 20_000, taxes: [tax('Reduced', 7, 1_308)] });
+    const release = ledgerLine({ debit: ACCOUNTS.receivables, credit: ACCOUNTS.liabilities, grossCents: -20_000, taxes: [tax('Reduced', 7, -1_308)] });
+    const refund = ledgerLine({ ...prepayment, grossCents: -20_000, taxes: [tax('Reduced', 7, -1_308)] });
+    const parked = ledgerLine({ debit: ACCOUNTS.receivables, credit: ACCOUNTS.liabilities, grossCents: 20_000, taxes: [tax('Reduced', 7, 1_308)] });
+    expect(post([prepayment, release, refund, parked]).bookings.map((b) => b.buchungstext)).toEqual([
+      'Anzahlung 7 %',
+      'Auflösung Anzahlung 7 %',
+      'Erstattung Anzahlung 7 %',
+      'Umbuchung Anzahlung 7 %',
+    ]);
+  });
+
+  it('names a payment refund "Erstattung", a debtor transfer "Forderung an Debitor" and other lines by command and account', () => {
+    const [refund, transfer, cityTax, move] = post([
+      payment({ grossCents: -5_000 }),
+      ledgerLine({ debit: ACCOUNTS.accountsReceivable, credit: ACCOUNTS.receivables, command: 'PostToAccountsReceivables', taxes: [] }),
+      ledgerLine({ credit: ACCOUNTS.cityTax, grossCents: 500, taxes: [] }),
+      ledgerLine({ debit: ACCOUNTS.folio, credit: ACCOUNTS.receivables, command: 'MoveLineItem', taxes: [] }),
+    ]).bookings;
+    expect(refund?.buchungstext).toBe('Erstattung Visa');
+    expect(transfer?.buchungstext).toBe('Forderung an Debitor');
+    expect(cityTax?.buchungstext).toBe('Buchung City Tax 0%');
+    // Both sides map to 1410: skipped, so only three bookings.
+    expect(move).toBeUndefined();
   });
 
   it('is cut to 60 characters', () => {
@@ -56,10 +73,65 @@ describe('Buchungstext', () => {
     expect(text.startsWith('Erlös Accommodation x')).toBe(true);
   });
 
-  it('labels each apaleo command in German', () => {
-    expect(
-      ['PostCharge', 'PostPayment', 'PostPrepayment', 'MoveLineItem', 'PostToAccountsReceivables', 'PostToLossOfAccountsReceivables', 'PostPrepaymentVat', 'System', 'Unknown'].map(commandLabel),
-    ).toEqual(['Erlös', 'Zahlung', 'Anzahlung', 'Umbuchung', 'Forderung', 'Forderungsverlust', 'USt Anzahlung', 'Buchung', 'Buchung']);
+  it('labels the remaining apaleo commands in German', () => {
+    expect(['MoveLineItem', 'PostToAccountsReceivables', 'PostToLossOfAccountsReceivables', 'PostPrepaymentVat', 'PostCharge', 'Unknown'].map(commandLabel)).toEqual([
+      'Umbuchung',
+      'Forderung an Debitor',
+      'Forderungsverlust',
+      'USt Anzahlung',
+      'Buchung',
+      'Buchung',
+    ]);
+  });
+});
+
+describe('revenueLabel', () => {
+  const chart = new ChartIndex([
+    { number: '5000', name: 'Revenues', type: 'Revenues', ledger: 'global', isArchived: false, hasChildren: true },
+    { number: 'RevenueNoShow', name: 'Revenues No-show', type: 'Revenues', parentNumber: '5000', ledger: 'global', isArchived: false, hasChildren: true },
+  ]);
+  const revenue = (number: string, name: string, parentNumber?: string) => ({ number, name, type: 'Revenues', ...(parentNumber ? { parentNumber } : {}) });
+
+  it.each([
+    ['RevenueAccommodation_Reduced:7.00', 'Revenues Accommodation (7%)', 7, 'Logis 7 %'],
+    ['RevenueFoodAndBeverages_Normal:19.00', 'Revenues Food and beverages (19%)', 19, 'Speisen und Getränke 19 %'],
+    ['RevenueCancellationFees_Without:0.00', 'Revenues Cancellation fees (no VAT)', 0, 'Stornogebühr 0 %'],
+    ['RevenueOther_Reduced:7.00', 'Revenues Other (7%)', 7, 'Sonstige Erlöse 7 %'],
+    ['5011', 'Accommodation 7%', 7, 'Accommodation 7%'],
+    ['5500', 'Revenues Spa (19%)', 19, 'Spa (19%)'],
+  ])('labels %s as "%s"', (number, name, rate, label) => {
+    expect(revenueLabel(revenue(number, name), chart, rate)).toBe(label);
+  });
+
+  it('finds the standard group through the chart parents', () => {
+    expect(revenueLabel(revenue('NS-7', 'Revenues No-show (7%)', 'RevenueNoShow'), chart, 7)).toBe('No-Show 7 %');
+  });
+
+  it('gives "Erlös Logis 7 %" for a charge on RevenueAccommodation_Reduced:7.00', () => {
+    const credit = { number: 'RevenueAccommodation_Reduced:7.00', name: 'Revenues Accommodation (7%)', type: 'Revenues', parentNumber: 'RevenueAccommodation' };
+    const mapping = mappingWith(mappingRow({ apaleoAccount: credit.number, apaleoType: 'Revenues', apaleoVatPercent: '7', datevAccount: '8300', datevVatPercent: '7' }));
+    expect(post([ledgerLine({ credit })], mapping).bookings[0]?.buchungstext).toBe('Erlös Logis 7 %');
+  });
+});
+
+describe('paymentLabel', () => {
+  it.each([
+    ['Cash Payment', 'Bar'],
+    ['Bank Transfer', 'Überweisung'],
+    ['Direct Debit', 'Lastschrift'],
+    ['Voucher Payment', 'Gutschein'],
+    ['Other Payment', 'Sonstige'],
+    ['Visa Credit Card Payment', 'Visa'],
+    ['Visa Debit Card Payment', 'Visa Debit'],
+    ['Amex Credit Card Payment', 'Amex'],
+    ['MasterCard Credit Card Payment', 'Mastercard'],
+    ['GiroCard Payment', 'Girocard'],
+    ['Maestro Card Payment', 'Maestro'],
+    ['Payment by Booking.com', 'Booking.com'],
+    ['PayPal Payment', 'PayPal'],
+    ['Visa', 'Visa'],
+  ])('labels %s as %s', (name, label) => {
+    expect(paymentLabel(name)).toBe(label);
   });
 });
 

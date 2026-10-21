@@ -25,8 +25,10 @@ describe('apaleo-datev live-smoke', () => {
     expect(out).toMatch(/^ {8}Payments\s+200\.00\s+0\.00$/m);
     expect(out).toMatch(/^ {8}Receivables\s+143\.80\s+0\.00$/m);
     expect(out).toMatch(/^ {8}Revenues\s+0\.00\s+138\.80$/m);
-    expect(out).toContain('OK    aggregates: 5 main accounts');
-    expect(out).toMatch(/^ {8}5000\s+Revenues\s+0\.00\s+138\.80\s+0\.00\s+138\.80\s+0\.00\s+127\.19\s+gross$/m);
+    expect(out).toContain('OK    aggregates: 10 accounts');
+    expect(out).toMatch(/^ {8}account\s+type\s+basis\s+apaleo debit\s+credit\s+balance\s+ledger balance\s+matches$/m);
+    expect(out).toMatch(/^ {8}5011\s+Revenues\s+net\s+0\.00\s+93\.46\s+-93\.46\s+-93\.46\s+yes$/m);
+    expect(out).toMatch(/^ {8}1611\s+Payments\s+gross\s+200\.00\s+0\.00\s+200\.00\s+200\.00\s+yes$/m);
     expect(out).toContain('Result: every required step passed for business day 2026-09-14.');
     expect(readdirSync(ctx.cwd)).toEqual(['apaleo-datev.config.yaml']);
   });
@@ -37,20 +39,50 @@ describe('apaleo-datev live-smoke', () => {
       'Accounts outside the chart: 6 lines use them; 0 accounts with parentNumber, 2 without (for example BSP-GHIJKL-1_Liabilities, BSP-ABCDEF-1_Receivables)',
     );
     expect(day14).toContain('Tax entries with percent 0 and amount 0: 1 of 6');
-    expect(day14).toContain('Aggregates matching the ledger by main account: 4 gross, 0 net, 1 both, 0 none');
+    expect(day14).toContain('Aggregates against the ledger by balance: 10 of 10 accounts match');
+    expect(day14).toContain(
+      'Deposit lines by side and sign: 1 received (1 with taxes[], 0 without); 0 released (0 with taxes[], 0 without), of them 0 refunded (0 with taxes[], 0 without)',
+    );
 
     const day15 = (await smoke(['--property', 'BSP', '--date', '2026-09-15'])).out;
     expect(day15).toMatch(/1 accounts with parentNumber, 2 without/);
     expect(day15).toContain('PostPrepaymentVat lines: 1; lines on VatOnLiabilities accounts: 1');
-    expect(day15).toMatch(/Aggregates matching the ledger by main account: .*, 0 none/);
+    expect(day15).toMatch(/Aggregates against the ledger by balance: (\d+) of \1 accounts match/);
 
     const day21 = (await smoke(['--property', 'BSP', '--date', '2026-09-21'])).out;
-    expect(day21).toContain('Deposit releases (debit Liabilities, credit Receivables): 1 lines, 1 with taxes[], 0 without');
+    expect(day21).toContain('0 received (0 with taxes[], 0 without); 1 released (1 with taxes[], 0 without), of them 0 refunded');
 
     const day22 = (await smoke(['--property', 'BSP', '--date', '2026-09-22'])).out;
-    expect(day22).toContain('Deposit releases (debit Liabilities, credit Receivables): 1 lines, 0 with taxes[], 1 without');
+    expect(day22).toContain('0 received (0 with taxes[], 0 without); 1 released (0 with taxes[], 1 without), of them 0 refunded');
     expect(day22).toContain('PostPrepaymentVat lines: 1; lines on VatOnLiabilities accounts: 1');
-    expect(day22).toMatch(/Aggregates matching the ledger by main account: .*, 0 none/);
+    expect(day22).toContain('Aggregates against the ledger by balance: 5 of 5 accounts match');
+  });
+
+  it('warns about a business day without bookings instead of a plain pass, and still exits 0', async () => {
+    // apaleo answers 204 for 2026-09-17.
+    const { code, out } = await smoke(['--property', 'BSP', '--date', '2026-09-17']);
+    expect(code).toBe(0);
+    expect(out).toContain('WARN  ledger: no lines on 2026-09-17');
+    expect(out).not.toContain('OK    ledger');
+    expect(out).toContain(
+      'Result: passed, but 2026-09-17 has no bookings, so nothing about the postings was checked; run again with --date <a day with bookings>.',
+    );
+    expect(out).not.toContain('every required step passed');
+  });
+
+  it('answers the questions on the recorded BER day 2026-10-21', async () => {
+    const { code, out } = await smoke(['--property', 'BER', '--date', '2026-10-21'], { live: true });
+    expect(code).toBe(0);
+    expect(out).toContain('OK    ledger: 35 lines on 2026-10-21');
+    expect(out).toContain('19 accounts with parentNumber, 0 without');
+    // Received: five prepayments with taxes and the overpayment parked at 0 %; released: four with taxes and the 0 % refund.
+    expect(out).toContain(
+      'Deposit lines by side and sign: 6 received (5 with taxes[], 1 without); 5 released (4 with taxes[], 1 without), of them 1 refunded (0 with taxes[], 1 without)',
+    );
+    expect(out).toContain('PostPrepaymentVat lines: 0; lines on VatOnLiabilities accounts: 0');
+    expect(out).toContain('Aggregates against the ledger by balance: 18 of 18 accounts match');
+    expect(out).toMatch(/^ {8}Vat_Reduced:7\.00\s+Vat\s+tax\s+0\.00\s+37\.37\s+-37\.37\s+-37\.37\s+yes$/m);
+    expect(out).toContain('Result: every required step passed for business day 2026-10-21.');
   });
 
   it('defaults to two days ago in the property time zone', async () => {
@@ -64,7 +96,7 @@ describe('apaleo-datev live-smoke', () => {
     const { code, out } = await smoke(['--property', 'BSP', '--date', '2026-09-14'], failWith('/aggregate-daily', 403));
     expect(code).toBe(0);
     expect(out).toContain('SKIP  aggregates: optional permission core.subledger_aggregate.create missing (not a failure)');
-    expect(out).toContain('Aggregates matching the ledger by main account: not checked (permission missing)');
+    expect(out).toContain('Aggregates against the ledger by balance: not checked (permission missing)');
   });
 
   it('fails on other aggregate errors', async () => {
