@@ -50,11 +50,11 @@
 
 ## 7. Docs and changelog
 
-- [ ] 7.1 `docs/setup-apaleo.md` rewritten to the real screens (Apps > Connected apps > Add a new app > Add custom app, page New simple client, Secret description, fine-grained client, All properties / Only selected properties, Search permission, PII Retrieve / Omit linked / Omit all with Omit all recommended)
-- [ ] 7.2 `docs/apaleo-source.md`: precise amounts wording, answers of the first live test, aggregate rule
-- [ ] 7.3 `docs/mapping-guide.md`: resolution step 3 skips empty parent rows, `/Offset` accounts, AR wildcard, no-show/cancellation suggestions, 2020 rows, Austrian properties, `--update` notes; template rows list updated
-- [ ] 7.4 `docs/posting-rules.md`: real deposit shapes, side-and-sign classification, booking texts, summary contents, invoice payments without a ledger line (`performAccountingForOpenInvoiceActions`)
-- [ ] 7.5 `docs/export.md` (VAT comparison, manifest totals) and `docs/troubleshooting.md` (`N-PARENT-ROW-EMPTY`, `N-TEMPLATE-SUGGESTION`, `N-FOREIGN-VAT-RATES`, the open debtor after an invoice payment, Austrian properties, the old sub-cent error); fixture README in `test/fixtures/apaleo/README.md` points to `live/`
-- [ ] 7.6 Regenerate `docs/examples/` and the golden EXTF file with the demo; review the diff (texts, protocol) by hand
-- [ ] 7.7 CHANGELOG: under `## [Unveröffentlicht]` a German entry „0.1.1 (geplant) – wichtige Korrektur für echte apaleo-Daten“ with `### Behoben` (precise amounts, mapping defaults, aggregate check, deposit summary, VAT comparison, texts, skipped totals, live-smoke) and `### Geändert` (manifest totals, template v2, migration via `init-mapping --update`, re-export needs `--overwrite` after the Kanzlei removed the old batch)
-- [ ] 7.8 Run `pnpm test` (docs consistency included), `pnpm lint`, `pnpm typecheck`, `pnpm build` green; `openspec validate s10-live-data-fixes --strict`
+- [x] 7.1 `docs/setup-apaleo.md` rewritten to the real screens (Apps > Connected apps > Add a new app > Add custom app, page New simple client, Secret description, fine-grained client, All properties / Only selected properties, Search permission, PII Retrieve / Omit linked / Omit all with Omit all recommended)
+- [x] 7.2 `docs/apaleo-source.md`: precise amounts wording, answers of the first live test, aggregate rule
+- [x] 7.3 `docs/mapping-guide.md`: resolution step 3 skips empty parent rows, `/Offset` accounts, AR wildcard, no-show/cancellation suggestions, 2020 rows, Austrian properties, `--update` notes; template rows list updated
+- [x] 7.4 `docs/posting-rules.md`: real deposit shapes, side-and-sign classification, booking texts, summary contents, invoice payments without a ledger line (`performAccountingForOpenInvoiceActions`)
+- [x] 7.5 `docs/export.md` (VAT comparison, manifest totals) and `docs/troubleshooting.md` (`N-PARENT-ROW-EMPTY`, `N-TEMPLATE-SUGGESTION`, `N-FOREIGN-VAT-RATES`, the open debtor after an invoice payment, Austrian properties, the old sub-cent error); fixture README in `test/fixtures/apaleo/README.md` points to `live/`
+- [x] 7.6 Regenerate `docs/examples/` and the golden EXTF file with the demo; review the diff (texts, protocol) by hand
+- [x] 7.7 CHANGELOG: under `## [Unveröffentlicht]` a German entry „0.1.1 (geplant) – wichtige Korrektur für echte apaleo-Daten“ with `### Behoben` (precise amounts, mapping defaults, aggregate check, deposit summary, VAT comparison, texts, skipped totals, live-smoke) and `### Geändert` (manifest totals, template v2, migration via `init-mapping --update`, re-export needs `--overwrite` after the Kanzlei removed the old batch)
+- [x] 7.8 Run `pnpm test` (docs consistency included), `pnpm lint`, `pnpm typecheck`, `pnpm build` green; `openspec validate s10-live-data-fixes --strict`

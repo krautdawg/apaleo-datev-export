@@ -6,8 +6,28 @@ Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 
 ## [Unveröffentlicht]
 
+**0.1.1 (geplant) – wichtige Korrektur für echte apaleo-Daten**
+
+Der erste Test gegen eine echte apaleo-Sandbox (Hotels BER und VIE, 2026-10-21) hat gezeigt, dass 0.1.0 echte Daten nicht exportieren konnte. Diese Korrekturen beheben das; die aufgezeichneten Antworten liegen anonym in `test/fixtures/apaleo/live/`, und die Tests lassen den ganzen Export darüber laufen.
+
+### Behoben
+
+- **Genaue Beträge**: apaleo schickt Netto- und Steuerbeträge mit bis zu acht Nachkommastellen. 0.1.0 brach dabei ab („is not a whole number of cents“). Jetzt bleiben sie genau erhalten; nur der Bruttobetrag muss ganze Cent sein, und Brutto muss Netto plus Steuern sein.
+- **Kontenzuordnung**: Eine leere Elternzeile (`3000;Liabilities` aus der Vorlage) blockiert die `*`-Zeilen nicht mehr. Debitorenkonten pro Reservierung und ihre `/Offset`-Konten landen über `*;AccountsReceivable;;;10000` auf dem Sammeldebitor. `E-UNMAPPED` meldet Konten pro Reservierung einmal pro Elternkonto, Typ und Satz und nennt die `*`-Zeile, die fehlt.
+- **Tagessummen** (`checks.aggregates`): Der Vergleich läuft über den Saldo pro Konto, so wie apaleo die Summen wirklich bildet (Erlöse und Anzahlungen netto, USt-Konten mit den genauen Steuern, sonst brutto). Auf den echten Daten passen alle Konten; 0.1.0 meldete falsche Abweichungen.
+- **Anzahlungen in der Übersicht**: Eingang, Auflösung und Erstattung werden nach Seite und Vorzeichen erkannt; apaleo bucht Auflösungen als negative Belastung. 0.1.0 zeigte sie als Eingang.
+- **USt-Vergleich**: Protokoll und Probelauf zeigen pro Satz die USt von DATEV (pro Buchung gerundet) neben der genauen USt von apaleo und der Differenz, für Erlöse und Anzahlungen. `E-VAT-TOTAL` erlaubt genau die Rundung der Zeilen und nennt die genaue Summe.
+- **Buchungstexte auf Deutsch**: zum Beispiel `Erlös Logis 7 %`, `Auflösung Anzahlung 7 %`, `Erstattung Anzahlung 0 %`, `Zahlung Visa`, `Forderung an Debitor` statt englischer Kontonamen aus apaleo.
+- **Übersprungene Zeilen** zeigen ihre Summe ohne Vorzeichen; die zweiten Zeilen jeder Zahlung (`/Offset`) ergaben in 0.1.0 eine negative Summe.
+- **`live-smoke`** warnt bei einem Tag ohne Buchungen, statt ihn als bestanden zu melden, zählt Anzahlungszeilen nach Eingang, Auflösung und Erstattung und vergleicht die Tagessummen über den Saldo.
+- **Dokumentation**: die echten Bildschirme von apaleo beim Anlegen der Custom App (personenbezogene Daten: **Omit all**), `/Offset`-Konten, Zahlungen auf Rechnungen ohne Zeile im Buchungsjournal (`performAccountingForOpenInvoiceActions`), Hotels in Österreich.
+
 ### Geändert
 
+- **Summen im Manifest**: `sollTotal` und `habenTotal` in `manifest.json` sind jetzt beide die Summe aller Buchungsbeträge, so wie die Kanzlei nach dem Import Summe Soll und Summe Haben sieht; dazu kommt `amountTotal` mit demselben Wert. Bis 0.1.0 waren es die Summen der Buchungen mit Kennzeichen `S` und `H`. Ein Skript, das diese Felder liest, muss angepasst werden.
+- **Vorlage Version 2** (`skr03-hotel@2`, `skr04-hotel@2`): keine leere Zeile mehr für `3000` Liabilities, `*`-Zeilen für Debitoren und Forderungsverluste, Vorschläge für No-Show- und Stornoerlöse zu 7 % (8300 / 4300), die historischen Sätze 16 % und 5 % von 2020 bewusst leer, und der Hinweis `N-FOREIGN-VAT-RATES` bei fremden Sätzen (Österreich).
+- **Umstieg**: Bestehende Kontenzuordnungen funktionieren weiter. `apaleo-datev init-mapping --property <id> --skr 03 --update` (oder `--skr 04`) ändert keine Zeile, hängt die neuen `*`-Zeilen an und meldet mit `N-PARENT-ROW-EMPTY` und `N-TEMPLATE-SUGGESTION`, was du prüfen solltest.
+- **Erneuter Export**: Wegen der neuen Buchungstexte unterscheidet sich eine neu erzeugte Datei von einer Datei aus 0.1.0, und der Export lehnt sie mit `E-FILE-EXISTS` ab. Nutze `--overwrite` erst, wenn die Kanzlei den alten Stapel in DATEV gelöscht hat.
 - **Dokumentation auf Deutsch**: Das README und die gesamte Dokumentation sind jetzt deutsch und sagen „du“; ein kurzes `README.en.md` erklärt das Tool für internationale Mitwirkende. `docs/setup-apaleo.de.md` und `docs/mapping-guide.de.md` heißen jetzt `docs/setup-apaleo.md` und `docs/mapping-guide.md`, die englischen Fassungen sind entfallen. `CONTRIBUTING.md`, `SECURITY.md`, `CHANGELOG.md`, die Vorlagen für Issues und Pull Requests und die Kommentare in den Beispieldateien sind deutsch, `CODE_OF_CONDUCT.md` ist die offizielle deutsche Übersetzung des Contributor Covenant 2.1, und in `DISCLAIMER.md` ist die deutsche Fassung verbindlich. Der Docs-Test prüft jetzt auch Links, Anker und die Sprache. Code, Ausgaben der Kommandozeile und Commits bleiben englisch.
 
 ## [0.1.0] - 2026-10-21

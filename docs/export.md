@@ -63,12 +63,24 @@ Für jedes Hotel und jeden Monat, in dieser Reihenfolge:
 5. Plausibilitätsprüfungen auf dem Ergebnis, die nachrechnen, was die Buchungen ergeben müssen:
    - `E-CONSERVATION`: Jede apaleo-Zeile ist gebucht oder übersprungen, nach Anzahl und Betrag ohne Vorzeichen.
    - `E-ACCOUNT-BALANCE`: Pro Geschäftstag und DATEV-Konto bewegen die Buchungen das Konto genau so wie die apaleo-Zeilen, die ihm zugeordnet sind. Das findet Fehler bei Soll/Haben und Vorzeichen.
-   - `E-VAT-TOTAL`: Pro USt-Satz entspricht die USt, die DATEV aus den Buchungen rechnen wird, der USt, die apaleo berechnet hat, mit höchstens einem Cent pro gemeldeter Rundungsdifferenz bei diesem Satz (Rundungen bei einem Satz entschuldigen nie eine Differenz bei einem anderen).
-6. Optional (`checks.aggregates: true`): die Tagessummen von apaleo pro Hauptkonto, eine Anfrage pro Geschäftstag, gegen die Zeilen des Buchungsjournals an diesem Tag. Ein Hauptkonto, das weder zu den Brutto- noch zu den Nettobeträgen passt, ergibt die Warnung `W-AGGREGATE-DIFF`; die Datei wird trotzdem geschrieben. Dafür braucht es die optionale Berechtigung `core.subledger_aggregate.create`; ohne sie scheitert der Monat mit `E-AGGREGATE-CHECK` und einem Hinweis, sie zu vergeben. Ist apaleo nicht erreichbar oder antwortet mit einem anderen Fehler, scheitert der Monat ebenfalls mit `E-AGGREGATE-CHECK`; starte ihn später noch einmal. Standardmäßig aus, weil apaleo nicht dokumentiert, ob diese Summen brutto oder netto sind.
+   - `E-VAT-TOTAL`: Pro USt-Satz entspricht die USt, die DATEV aus den Buchungen rechnen wird, der Summe der Steuerbeträge von apaleo, jeder pro Zeile auf Cent gerundet, mit höchstens einem Cent pro gemeldeter Rundungsdifferenz bei diesem Satz (Rundungen bei einem Satz entschuldigen nie eine Differenz bei einem anderen). Die Meldung nennt auch die genaue Summe von apaleo und die Rundungsdifferenz der Zeilen. Dass die USt von DATEV um ein paar Cent von der genauen Summe von apaleo abweicht, ist allein nie ein Fehler (siehe unten).
+6. Optional (`checks.aggregates: true`): die Tagessummen von apaleo, eine Anfrage pro Geschäftstag, gegen die Zeilen des Buchungsjournals an diesem Tag. Verglichen wird pro Konto, das apaleo listet, der **Saldo** (Soll minus Haben): globale Konten wie Zahlungsarten, Erlös- und USt-Unterkonten für sich, Gast-, externe und Buchungskonten über ihr oberstes Elternkonto (`1200`, `3000`, `9999`); Erlöse und Anzahlungen mit dem genauen Nettobetrag, die USt-Konten von apaleo mit den genauen Steuern der Erlös- und Anzahlungszeilen, alle anderen Konten brutto. So passten im ersten Live-Test alle Konten. Ein Konto, dessen Saldo abweicht, ergibt die Warnung `W-AGGREGATE-DIFF` mit beiden Salden und der Grundlage (brutto, netto oder Steuer); die Datei wird trotzdem geschrieben. Dafür braucht es die optionale Berechtigung `core.subledger_aggregate.create`; ohne sie scheitert der Monat mit `E-AGGREGATE-CHECK` und einem Hinweis, sie zu vergeben. Ist apaleo nicht erreichbar oder antwortet mit einem anderen Fehler, scheitert der Monat ebenfalls mit `E-AGGREGATE-CHECK`; starte ihn später noch einmal. Standardmäßig aus: Die Regel stammt aus einer Sandbox und zwei Tagen und ist für Produktivkonten noch nicht bestätigt.
 
 Jeder Befund mit `E-` stoppt dieses Hotel und diesen Monat: Dafür wird keine Datei geschrieben, und die anderen Hotels und Monate laufen weiter. Warnungen (`W-`) werden ausgegeben und im Protokoll festgehalten.
 
 Ein Monat ohne Buchungen schreibt keine Datei (`N-NO-BOOKINGS`).
+
+### USt im Protokoll: DATEV pro Buchung, apaleo genau
+
+Das Protokoll und der Probelauf zeigen pro USt-Satz, für die Erlöse und für die Anzahlungen, die USt, die DATEV rechnen wird, daneben die USt von apaleo und die Differenz, zum Beispiel am Live-Tag BER:
+
+```
+Revenue and VAT per rate:
+  7 %: gross 571.22, DATEV VAT 37.38, apaleo VAT 37.37, difference 0.01 (apaleo precise 37.3695327)
+  19 %: gross 47.38, DATEV VAT 7.57, apaleo VAT 7.56, difference 0.01 (apaleo precise 7.56487395)
+```
+
+DATEV rechnet die USt aus jeder Buchung und rundet sie auf den Cent; apaleo hält die Steuer jeder Zeile genau (bis zu acht Nachkommastellen) und rundet erst die Summe. Die Differenz von ein paar Cent ist diese Rundung, kein Fehler, und kein Grund, Buchungen zu ändern. In der Umsatzsteuer-Voranmeldung zählt, was DATEV gebucht hat.
 
 ## Ausgabeordner
 
@@ -82,8 +94,9 @@ exports/
 ```
 
 - Die EXTF-Datei ist das, was die Kanzlei importiert. Benenne sie nicht um (DATEV importiert nur Namen, die mit `EXTF_` beginnen), und öffne und speichere sie nicht in Excel.
-- Das Protokoll ist die Übersicht des Probelaufs (Summen pro DATEV-Konto, Erlöse und USt pro Satz, Kurtaxe, Zahlungen pro Geldtransitkonto, Anzahlungen, übersprungene Zeilen, Befunde) plus die SHA-256-Prüfsumme der Datei, die der Kontenzuordnung und die Version des Tools.
-- `manifest.json` listet jede Datei des Ordners mit ihrer SHA-256-Prüfsumme, der Prüfsumme ihres Inhalts (ohne die Kopfzeile, die die Erstellungszeit enthält), der Anzahl der Buchungen, den Summen von Soll und Haben, der Prüfsumme der Kontenzuordnung, der Version des Tools und der Erstellungszeit.
+- Das Protokoll ist die Übersicht des Probelaufs (Summen pro DATEV-Konto, Erlöse und USt pro Satz, Anzahlungen und ihre USt pro Satz, Kurtaxe, Zahlungen pro Geldtransitkonto, erhaltene, aufgelöste und erstattete Anzahlungen, Debitor, übersprungene Zeilen, Befunde) plus die SHA-256-Prüfsumme der Datei, die der Kontenzuordnung und die Version des Tools.
+- `manifest.json` listet jede Datei des Ordners mit ihrer SHA-256-Prüfsumme, der Prüfsumme ihres Inhalts (ohne die Kopfzeile, die die Erstellungszeit enthält), der Anzahl der Buchungen, der Summe aller Buchungsbeträge, der Prüfsumme der Kontenzuordnung, der Version des Tools und der Erstellungszeit.
+- `sollTotal`, `habenTotal` und `amountTotal` im Manifest sind dieselbe Summe: die Summe aller Buchungsbeträge der Datei. DATEV zählt jeden Betrag einmal im Soll und einmal im Haben, also sieht die Kanzlei nach dem Import genau diese Summe als Summe Soll und Summe Haben. (Bis 0.1.0 waren `sollTotal` und `habenTotal` die Summen der Buchungen mit Kennzeichen `S` und `H`; ein Skript, das sie liest, liest jetzt die Gesamtsumme. `amountTotal` ist der eindeutige Name.)
 
 ## Noch einmal exportieren
 

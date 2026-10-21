@@ -197,6 +197,39 @@ describe('docs folder', () => {
     expect(text).toContain(APALEO_PERMISSIONS.scopeAlternative);
   });
 
+  it('docs/setup-apaleo.md follows the real apaleo screens in order and recommends "Omit all"', () => {
+    const text = readRepoFile('docs/setup-apaleo.md');
+    const names = ['Add a new app', 'Add custom app', 'New simple client', 'Secret description', 'Search permission', 'Omit all'];
+    const positions = names.map((name) => text.indexOf(`**${name}**`));
+    expect(positions.every((position) => position >= 0), names.join(', ')).toBe(true);
+    expect([...positions].sort((a, b) => a - b)).toEqual(positions);
+    for (const name of ['All properties', 'Only selected properties', 'Retrieve', 'Omit linked']) expect(text).toContain(`**${name}**`);
+    expect(text).toContain('Wähle **Omit all**');
+  });
+
+  it('describes apaleo as tested live: precise amounts, the first live test and the aggregate rule', () => {
+    const source = readRepoFile('docs/apaleo-source.md');
+    expect(source).toContain('bis zu acht Nachkommastellen');
+    expect(source).toContain('Nur der Bruttobetrag (`grossAmount`) muss ganze Cent sein');
+    expect(source).not.toMatch(/ein Betrag, der mehr als 0,0001 von einem ganzen Cent abweicht, stoppt den Export/);
+    for (const answer of ['`parentNumber`', '**negativem** Betrag', '`PostPrepaymentVat`', '**Saldo**']) expect(source).toContain(answer);
+
+    const guide = readRepoFile('docs/mapping-guide.md');
+    for (const topic of ['/Offset', 'beendet die Suche nicht', '*;AccountsReceivable;;;10000', 'No-Show- und Stornoerlöse', 'Historische Sätze 16 % und 5 %', 'Österreich', 'N-PARENT-ROW-EMPTY', 'N-TEMPLATE-SUGGESTION']) {
+      expect(guide.toLowerCase(), topic).toContain(topic.toLowerCase());
+    }
+
+    const rules = readRepoFile('docs/posting-rules.md');
+    for (const topic of ['**negativem** Betrag', 'Seite **und** Vorzeichen', 'Auflösung Anzahlung 7 %', 'Erlös Logis 7 %', 'performAccountingForOpenInvoiceActions']) {
+      expect(rules, topic).toContain(topic);
+    }
+    expect(readRepoFile('docs/troubleshooting.md')).toContain('performAccountingForOpenInvoiceActions');
+
+    const exportDoc = readRepoFile('docs/export.md');
+    expect(exportDoc).toContain('DATEV VAT 37.38, apaleo VAT 37.37, difference 0.01');
+    expect(exportDoc).toContain('`sollTotal`, `habenTotal` und `amountTotal` im Manifest sind dieselbe Summe');
+  });
+
   it('documents every config key and every environment variable in docs/configuration.md', () => {
     const text = readRepoFile('docs/configuration.md');
     for (const path of configPaths()) expect(text, path).toContain(`\`${path}\``);
@@ -214,7 +247,7 @@ describe('docs folder', () => {
         .split(/\r?\n/)
         .filter((line) => line.includes('Vorschlag (ungeprüft)')),
     );
-    if (unchecked.length === 0) expect(guide).toContain('In Version 1 der Vorlagen ist keine Zeile mit `Vorschlag (ungeprüft)` markiert');
+    if (unchecked.length === 0) expect(guide).toContain('In Version 2 der Vorlagen ist keine Zeile mit `Vorschlag (ungeprüft)` markiert');
     for (const line of unchecked) expect(guide).toContain(line.split(';').slice(0, 4).join(';'));
     expect(headings(guide, '##').at(-1)).toBe('Checkliste zur Freigabe durch die Kanzlei');
     expect(section(guide, '## Checkliste zur Freigabe durch die Kanzlei').match(/^- \[ \]/gm)?.length).toBeGreaterThanOrEqual(5);
