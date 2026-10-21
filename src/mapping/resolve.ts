@@ -29,8 +29,14 @@ function indexOf(mapping: Mapping): Map<string, MappingRow> {
  * and type; (2) the number with any type (Grman rows); (3) the parent chain, from
  * the chart or else the account's own `parentNumber`, with the same type (or any
  * type); (4) for VAT-relevant types the wildcard row for the type and the line's
- * rate; (5) for other types the wildcard row for the type. A row with an empty
- * DATEV account is returned like any other: it means "unmapped".
+ * rate; (5) for other types the wildcard row for the type.
+ *
+ * An exact row (steps 1 and 2) with an empty DATEV account is returned as is: it
+ * means "unmapped", because the user listed that account on purpose. A parent
+ * row with an empty DATEV account does not end the search (template version 1
+ * wrote `3000;Liabilities` empty, and one DATEV account cannot serve every
+ * rate); when nothing else gives a DATEV account, the first such parent row is
+ * returned so that findings can name it.
  */
 export function resolve(mapping: Mapping, account: AccountRef, options: ResolveOptions): MappingRow | undefined {
   const index = indexOf(mapping);
@@ -49,18 +55,24 @@ export function resolve(mapping: Mapping, account: AccountRef, options: ResolveO
   const seen = new Set<string>([account.number]);
   const own = inChart(account.number);
   let parent = own ? own.parentNumber : account.parentNumber;
+  let emptyParent: MappingRow | undefined;
   while (parent !== undefined && !seen.has(parent)) {
     seen.add(parent);
     const row = byNumber(parent);
-    if (row) return row;
+    if (row?.datevAccount) return row;
+    emptyParent ??= row;
     parent = inChart(parent)?.parentNumber;
   }
 
-  if (!VAT_RELEVANT_TYPES.has(account.type)) {
-    return index.get(rowKey({ apaleoAccount: WILDCARD, apaleoType: account.type, apaleoVatPercent: '' }));
-  }
-  if (options.rate === undefined) return undefined;
-  return index.get(rowKey({ apaleoAccount: WILDCARD, apaleoType: account.type, apaleoVatPercent: String(options.rate) }));
+  const wildcard = wildcardRow(index, account.type, options.rate);
+  return wildcard?.datevAccount ? wildcard : (emptyParent ?? wildcard);
+}
+
+/** The wildcard row for a type: for VAT-relevant types the one at `rate` (none when the rate is unknown). */
+function wildcardRow(index: Map<string, MappingRow>, type: string, rate: number | undefined): MappingRow | undefined {
+  if (!VAT_RELEVANT_TYPES.has(type)) return index.get(rowKey({ apaleoAccount: WILDCARD, apaleoType: type, apaleoVatPercent: '' }));
+  if (rate === undefined) return undefined;
+  return index.get(rowKey({ apaleoAccount: WILDCARD, apaleoType: type, apaleoVatPercent: String(rate) }));
 }
 
 /**

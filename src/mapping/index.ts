@@ -3,7 +3,20 @@ export { checkCoverage, checkMapping, datevVatRate, impliedVatRate, type CheckMa
 export { appendRows, convertGrmanRows, mappingHeaderComment, newRows, renderMappingFile } from './file.js';
 export { MappingError, loadMapping, parseMapping, type LoadMappingOptions, type ParseMappingOptions } from './load.js';
 export { lineRate, resolve, type ResolveOptions } from './resolve.js';
-export { loadTemplate, matchRule, parseTemplate, scaleAccount, suggestRows, type Suggestion, type Template, type TemplateRule } from './template.js';
+export {
+  GERMAN_VAT_RATES,
+  HISTORICAL_VAT_RATES,
+  isHistoricalRow,
+  loadTemplate,
+  matchRule,
+  parseTemplate,
+  scaleAccount,
+  suggestRows,
+  type Suggestion,
+  type Template,
+  type TemplateRule,
+} from './template.js';
+export { updateNotes } from './update.js';
 export {
   ANY_TYPE,
   MAPPING_COLUMNS,

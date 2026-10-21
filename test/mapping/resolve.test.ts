@@ -79,6 +79,43 @@ describe('resolution order', () => {
   });
 });
 
+describe('empty parent rows (template version 1)', () => {
+  /** A v0.1.0 file: the empty `3000;Liabilities` row and the deposit wildcards. */
+  const v1 = mappingOf([
+    mappingRow({ apaleoAccount: 'RevenueNoShow_Reduced:7.00', apaleoType: 'Revenues', apaleoVatPercent: '7' }),
+    mappingRow({ apaleoAccount: '3000', apaleoType: 'Liabilities', apaleoName: 'Liabilities' }),
+    mappingRow({ apaleoAccount: '*', apaleoType: 'Liabilities', apaleoVatPercent: '7', datevAccount: '1711', datevVatPercent: '7' }),
+    mappingRow({ apaleoAccount: '*', apaleoType: 'Liabilities', apaleoVatPercent: '19', datevAccount: '1718', datevVatPercent: '19' }),
+    mappingRow({ apaleoAccount: '*', apaleoType: 'Liabilities', apaleoVatPercent: '0', datevAccount: '1719', datevVatPercent: '0' }),
+    mappingRow({ apaleoAccount: '9999', apaleoType: 'AccountsReceivable' }),
+  ]);
+  const at = (account: AccountRef, rate: number) => resolve(v1, account, { rate });
+
+  it.each([
+    ['EPEBVUIU-1_Liabilities/Reduced:7.00', 7, '1711'],
+    ['MXETGHPM-1_Liabilities/Normal:19.00', 19, '1718'],
+    ['EPEBVUIU-1_Liabilities/Null:0.00', 0, '1719'],
+  ])('passes over the empty 3000 row: %s at %d %% resolves to %s', (number, rate, account) => {
+    expect(at(ref(number, 'Liabilities', '3000'), rate)?.datevAccount).toBe(account);
+  });
+
+  it('returns the empty parent row when no wildcard gives an account, so findings can name it', () => {
+    expect(at(ref('X-1_Liabilities/Reduced:13.00', 'Liabilities', '3000'), 13)).toMatchObject({ apaleoAccount: '3000', datevAccount: '', line: 3 });
+    expect(at(ref('ZAQSEFYC-1_AccountsReceivable', 'AccountsReceivable', '9999'), 0)).toMatchObject({ apaleoAccount: '9999', line: 7 });
+  });
+
+  it('keeps an exact row with an empty DATEV account unmapped', () => {
+    expect(at(ref('RevenueNoShow_Reduced:7.00', 'Revenues', 'RevenueNoShow'), 7)).toMatchObject({ datevAccount: '', line: 2 });
+  });
+
+  it('resolves per-reservation debtor accounts and their /Offset through the AccountsReceivable wildcard', () => {
+    const withWildcard = mappingOf([...v1.rows, mappingRow({ apaleoAccount: '*', apaleoType: 'AccountsReceivable', datevAccount: '10000' })]);
+    for (const number of ['ZAQSEFYC-1_AccountsReceivable', 'ZAQSEFYC-1_AccountsReceivable/Offset']) {
+      expect(resolve(withWildcard, ref(number, 'AccountsReceivable', '9999'), { rate: 0 })?.datevAccount).toBe('10000');
+    }
+  });
+});
+
 describe('per-reservation accounts without a parent (Swagger shape)', () => {
   it('resolves the debit to the Receivables wildcard and the credit to the 7 % Liabilities wildcard', () => {
     const line = ledgerLine({

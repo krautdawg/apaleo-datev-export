@@ -6,7 +6,7 @@ import type { SourceAccount } from '../../src/core/source.js';
 import { encodeCp1252 } from '../../src/datev/cp1252.js';
 import { decodeCsv } from '../../src/mapping/csv.js';
 import { parseMapping } from '../../src/mapping/index.js';
-import { BSP, CLIENT_ID, FIXTURE_FILES, createApaleoContext, loadBeispielData } from '../helpers/apaleo.js';
+import { BSP, CLIENT_ID, FIXTURE_FILES, createApaleoContext, fixturePath, loadBeispielData } from '../helpers/apaleo.js';
 import { createTestContext, type TestContext } from '../helpers/context.js';
 import { FakeSource, type FakeSourceData } from '../helpers/fake-source.js';
 
@@ -56,8 +56,11 @@ describe('apaleo-datev init-mapping', () => {
     expect(rowOf(ctx, '5011')).toMatch(/^5011;Revenues;Accommodation 7%;7;4300;;7;;;Vorschlag: Erlöse 7 % USt \(Logis\)/);
     expect(rowOf(ctx, '3501')).toMatch(/^3501;CityTaxes;City Tax 0%;0;;;;;;Vorschlag: bitte entscheiden/);
 
-    expect(ctx.out()).toContain(`Wrote ${join(ctx.cwd, 'mapping-BSP.csv')} from template skr04-hotel@1 for property BSP.`);
-    expect(ctx.out()).toContain('24 rows: 18 mapped, 2 unmapped, 4 VAT account row(s) that need no DATEV account.');
+    expect(ctx.out()).toContain(`Wrote ${join(ctx.cwd, 'mapping-BSP.csv')} from template skr04-hotel@2 for property BSP.`);
+    expect(ctx.out()).toContain(
+      '29 rows: 21 mapped, 2 unmapped, 2 historical row(s) at the 2020 rates 16 % and 5 %, left empty on purpose, ' +
+        '4 VAT account row(s) that need no DATEV account.',
+    );
     expect(ctx.out()).toContain('have your Steuerberater check the file');
   });
 
@@ -208,5 +211,62 @@ describe('apaleo-datev init-mapping', () => {
     const { ctx } = await fakeContext();
     expect(await runCli(argv, ctx)).toBe(2);
     expect(ctx.err()).toContain(message);
+  });
+});
+
+describe('init-mapping on the recorded apaleo sandbox charts', () => {
+  const live = () => createApaleoContext({ live: true });
+  const lines = (ctx: TestContext, file: string) => text(ctx, file).split('\r\n');
+
+  it('BER (SKR03): no 3000 row, deposit and debtor wildcards, no-show and cancellation fees at 7 %, empty 2020 rows', async () => {
+    const ctx = live();
+    expect(await runCli(['init-mapping', '--property', 'BER', '--skr', '03'], ctx)).toBe(0);
+    const file = 'mapping-BER.csv';
+    expect(rowOf(ctx, '3000', file)).toBeUndefined();
+    expect(rowOf(ctx, 'CollectiveDebitor_LossOfAccountsReceivable', file)).toBeUndefined();
+    const wildcards = lines(ctx, file).filter((line) => line.startsWith('*;')).map((line) => line.split(';').slice(0, 7).join(';'));
+    expect(wildcards).toEqual(
+      expect.arrayContaining(['*;Liabilities;;7;1711;;7', '*;Liabilities;;19;1718;;19', '*;Liabilities;;0;1719;;0', '*;AccountsReceivable;;;10000;;']),
+    );
+    expect(rowOf(ctx, 'RevenueNoShow_Reduced:7.00', file)).toMatch(/^RevenueNoShow_Reduced:7\.00;Revenues;Revenues No-show \(7%\);7;8300;;7;/);
+    expect(rowOf(ctx, 'RevenueCancellationFees_Reduced:7.00', file)).toMatch(/;7;8300;;7;;;archiviert\. Vorschlag: No-Show/);
+    const historical = lines(ctx, file).filter((line) => /^Revenue\w+_(Normal:16|Reduced:5)\.00;/.test(line));
+    expect(historical).toHaveLength(10);
+    for (const line of historical) expect(line).toMatch(/;(16|5);;;;;;(archiviert\. )?Vorschlag: leer lassen, historischer Satz 1\.7\.–31\.12\.2020/);
+    expect(ctx.out()).toMatch(/\d+ rows: \d+ mapped, \d+ unmapped, 12 historical row\(s\) at the 2020 rates 16 % and 5 %, left empty on purpose/);
+    expect(ctx.out()).not.toContain('N-FOREIGN-VAT-RATES');
+  });
+
+  it('writes the committed live mapping of BER byte for byte', async () => {
+    const ctx = live();
+    expect(await runCli(['init-mapping', '--property', 'BER', '--skr', '03'], ctx)).toBe(0);
+    expect(read(ctx, 'mapping-BER.csv').equals(readFileSync(fixturePath('live/BER/mapping-BER.live.csv')))).toBe(true);
+  });
+
+  it('VIE (Austrian rates): leaves 4.9, 10, 13 and 20 % empty and prints N-FOREIGN-VAT-RATES', async () => {
+    const ctx = live();
+    expect(await runCli(['init-mapping', '--property', 'VIE', '--skr', '03'], ctx)).toBe(0);
+    expect(ctx.out()).toContain('N-FOREIGN-VAT-RATES');
+    expect(ctx.out()).toContain('4.9 %, 10 %, 13 %, 20 %');
+    for (const number of ['RevenueAccommodation_Reduced:13.00', 'RevenueFoodAndBeverages_VeryReduced:10.00', 'RevenueFoodAndBeverages_Normal:20.00']) {
+      expect(rowOf(ctx, number, 'mapping-VIE.csv')).toMatch(/^[^;]+;Revenues;[^;]*;[\d.]+;;/);
+    }
+  });
+
+  it('--update of a template version 1 file keeps every row, appends the debtor wildcard and prints migration notes', async () => {
+    const ctx = live();
+    const v1 = readFileSync(fixturePath('live/BER/mapping-BER.v1.csv'));
+    await ctx.fs.writeFile(join(ctx.cwd, 'mapping-BER.csv'), v1);
+    expect(await runCli(['init-mapping', '--property', 'BER', '--skr', '03', '--update'], ctx)).toBe(0);
+
+    const updated = read(ctx, 'mapping-BER.csv');
+    expect(updated.subarray(0, v1.length).equals(v1)).toBe(true);
+    const appended = decodeCsv(updated.subarray(v1.length)).text;
+    expect(appended).toMatch(/^\*;AccountsReceivable;;;10000;;;;;Vorschlag: Sammeldebitor/m);
+    const out = ctx.out();
+    expect(out).toMatch(/N-PARENT-ROW-EMPTY: line 67: the parent account 3000 \(Liabilities\) has no DATEV account\. It no longer blocks/);
+    expect(out).toMatch(/N-TEMPLATE-SUGGESTION: line 25: the template now suggests DATEV account 8300 for RevenueNoShow_Reduced:7\.00 \(Revenues\) at 7 %/);
+    expect(out).toMatch(/N-TEMPLATE-SUGGESTION: line \d+: the template now suggests DATEV account 8300 for RevenueCancellationFees_Reduced:7\.00 \(Revenues\) at 7 %/);
+    expect(out.match(/N-TEMPLATE-SUGGESTION/g)).toHaveLength(2);
   });
 });

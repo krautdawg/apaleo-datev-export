@@ -15,13 +15,13 @@
 
 ## 3. Resolver and templates (defects 2, 3, 10)
 
-- [ ] 3.1 `src/mapping/resolve.ts`: pass over empty parent rows and continue to wildcards; return the first empty parent row only when nothing else applies; exact empty rows stay unmapped; tests for the v0.1.0 `3000` row at 7/19/0 % and for an exact empty revenue row
-- [ ] 3.2 Templates `skr03-hotel@2` / `skr04-hotel@2`: AccountsReceivable rule as wildcard; LossOfAccountsReceivable 7/19 % as wildcards; no-show and cancellation-fee rules at 7 % (8300 / 4300) before the generic 7 % rule; 16 % and 5 % rules for Revenues and Liabilities with the 2020 comment; template tests updated
-- [ ] 3.3 `suggestRows`: omit container accounts outside the global ledger whose type has wildcard rules and no rule yields an account; test on the recorded BER chart (no `3000` row, `*;AccountsReceivable;;;10000`, no-show/cancellation 7 % to 8300, 16/5 % rows empty)
-- [ ] 3.4 `init-mapping`: count historical 16/5 % rows separately; `N-FOREIGN-VAT-RATES` for the VIE chart (4.9, 10, 13, 20 %); tests
-- [ ] 3.5 `init-mapping --update`: `N-PARENT-ROW-EMPTY` and `N-TEMPLATE-SUGGESTION`; test with a template-v1 BER file: existing rows byte-identical, AR wildcard appended, notes for `3000`, `RevenueNoShow_Reduced:7.00`, `RevenueCancellationFees_Reduced:7.00`
-- [ ] 3.6 `src/mapping/check.ts`: group `E-UNMAPPED` for per-reservation accounts by parent, type and rate with count and three examples; fix texts naming the empty parent row and the wildcard row with the template account; tests for the Liabilities and AccountsReceivable cases
-- [ ] 3.7 Generate `test/fixtures/apaleo/live/BER/mapping-BER.live.csv` with `init-mapping --skr 03` (template v2) on the BER chart and commit it; `mapping check --from 2026-10-21 --to 2026-10-21` on it exits 0
+- [x] 3.1 `src/mapping/resolve.ts`: pass over empty parent rows and continue to wildcards; return the first empty parent row only when nothing else applies; exact empty rows stay unmapped; tests for the v0.1.0 `3000` row at 7/19/0 % and for an exact empty revenue row
+- [x] 3.2 Templates `skr03-hotel@2` / `skr04-hotel@2`: AccountsReceivable rule as wildcard; LossOfAccountsReceivable 7/19 % as wildcards; no-show and cancellation-fee rules at 7 % (8300 / 4300) before the generic 7 % rule; 16 % and 5 % rules for Revenues and Liabilities with the 2020 comment; template tests updated
+- [x] 3.3 `suggestRows`: omit container accounts outside the global ledger whose type has wildcard rules and no rule yields an account; test on the recorded BER chart (no `3000` row, `*;AccountsReceivable;;;10000`, no-show/cancellation 7 % to 8300, 16/5 % rows empty)
+- [x] 3.4 `init-mapping`: count historical 16/5 % rows separately; `N-FOREIGN-VAT-RATES` for the VIE chart (4.9, 10, 13, 20 %); tests
+- [x] 3.5 `init-mapping --update`: `N-PARENT-ROW-EMPTY` and `N-TEMPLATE-SUGGESTION`; test with a template-v1 BER file: existing rows byte-identical, AR wildcard appended, notes for `3000`, `RevenueNoShow_Reduced:7.00`, `RevenueCancellationFees_Reduced:7.00`
+- [x] 3.6 `src/mapping/check.ts`: group `E-UNMAPPED` for per-reservation accounts by parent, type and rate with count and three examples; fix texts naming the empty parent row and the wildcard row with the template account; tests for the Liabilities and AccountsReceivable cases
+- [x] 3.7 Generate `test/fixtures/apaleo/live/BER/mapping-BER.live.csv` with `init-mapping --skr 03` (template v2) on the BER chart and commit it; `mapping check --from 2026-10-21 --to 2026-10-21` on it exits 0
 
 ## 4. Posting (defects 5, 7, 9, 6 summary part)
 

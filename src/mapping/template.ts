@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { ChartIndex } from '../core/chart.js';
 import type { Finding } from '../core/findings.js';
@@ -16,6 +17,11 @@ const TEMPLATE_ID = /\bskr0[34]-hotel@\d+\b/;
 const WILDCARD_PATTERN = '*';
 const NO_RULE_COMMENT = 'Keine Vorlage-Regel passt: bitte mit Steuerberater zuordnen.';
 const ARCHIVED = 'archiviert';
+/** VAT rates the German templates know: 7 and 19 % today, 5 and 16 % from 1 July to 31 December 2020. */
+export const GERMAN_VAT_RATES: readonly number[] = [5, 7, 16, 19];
+/** The 2020 rates: the templates leave their revenue and deposit rows empty on purpose. */
+export const HISTORICAL_VAT_RATES: readonly number[] = [5, 16];
+const HISTORICAL_TYPES: ReadonlySet<string> = new Set(['Revenues', 'Liabilities']);
 
 export interface TemplateRule {
   line: number;
@@ -47,6 +53,26 @@ export function templateUrl(skr: Skr): URL {
 /** Reads the template shipped in `templates/`. */
 export async function loadTemplate(skr: Skr): Promise<Template> {
   return parseTemplate(await readFile(templateUrl(skr), 'utf8'), skr);
+}
+
+const shipped = new Map<Skr, Template>();
+
+/** The template shipped in `templates/`, read once and synchronously (for fix hints in findings). */
+export function shippedTemplate(skr: Skr): Template {
+  let template = shipped.get(skr);
+  if (!template) {
+    template = parseTemplate(readFileSync(templateUrl(skr), 'utf8'), skr);
+    shipped.set(skr, template);
+  }
+  return template;
+}
+
+/** The DATEV account the template's wildcard rule gives a type at a rate (any rate for types without one), scaled; undefined when none. */
+export function templateWildcardAccount(template: Template, type: string, rate: number | undefined, sachkontenlaenge: number): string | undefined {
+  const rule = template.rules.find(
+    (r) => r.wildcard && r.apaleoType === type && r.datevAccount !== '' && (r.apaleoVatPercent === undefined || r.apaleoVatPercent === rate),
+  );
+  return rule ? scaleAccount(rule.datevAccount, type, sachkontenlaenge) : undefined;
 }
 
 export function parseTemplate(text: string, skr: Skr): Template {
@@ -100,14 +126,26 @@ export interface Suggestion {
   findings: Finding[];
 }
 
+/** A row the template leaves empty on purpose: revenue or deposits at a 2020 rate (5 or 16 %). */
+export function isHistoricalRow(row: Pick<MappingRowValues, 'apaleoType' | 'apaleoVatPercent' | 'datevAccount'>): boolean {
+  const rate = parsePercent(row.apaleoVatPercent);
+  return row.datevAccount === '' && HISTORICAL_TYPES.has(row.apaleoType) && rate !== undefined && HISTORICAL_VAT_RATES.includes(rate);
+}
+
 /**
  * One row per leaf account of the chart (an account without children of the
  * same type), pre-filled from the first matching rule, plus the wildcard rows of
  * the template. Accounts no rule matches stay unmapped. Rows are grouped by type.
+ *
+ * A container account outside the global ledger (`hasChildren`, such as
+ * `3000` Liabilities) gets no row when its type has wildcard rules and no rule
+ * gives it a DATEV account: the wildcard rows cover its per-reservation
+ * children, and one DATEV account cannot serve every rate.
  */
 export function suggestRows(accounts: readonly SourceAccount[], template: Template, sachkontenlaenge: number): Suggestion {
   const chart = new ChartIndex(accounts);
   const parents = new Set(accounts.flatMap((a) => (a.parentNumber === undefined ? [] : [`${a.parentNumber}\u0000${a.type}`])));
+  const wildcardTypes = new Set(template.rules.filter((rule) => rule.wildcard).map((rule) => rule.apaleoType));
   const rows = new Map<string, MappingRowValues>();
   const add = (row: MappingRowValues) => {
     const key = rowKey(row);
@@ -117,6 +155,8 @@ export function suggestRows(accounts: readonly SourceAccount[], template: Templa
   for (const account of chart.accounts) {
     if (parents.has(`${account.number}\u0000${account.type}`)) continue;
     const rule = matchRule(template, account, [account.name, ...parentNames(chart, account)]);
+    const container = account.ledger !== 'global' && account.hasChildren && wildcardTypes.has(account.type);
+    if (container && !rule?.datevAccount) continue;
     const comment = rule?.comment ?? NO_RULE_COMMENT;
     add({
       apaleoAccount: account.number,
@@ -147,7 +187,23 @@ export function suggestRows(accounts: readonly SourceAccount[], template: Templa
         `(for example ${scaleAccount('8300', 'Revenues', sachkontenlaenge)} and ${scaleAccount('10000', PERSONAL_ACCOUNT_TYPE, sachkontenlaenge)})`,
     });
   }
+  const foreign = foreignRates(accounts);
+  if (foreign.length > 0) {
+    findings.push({
+      code: 'N-FOREIGN-VAT-RATES',
+      message:
+        `the chart has VAT rates the German templates and DATEV's Automatikkonten do not cover: ${foreign.map((rate) => `${rate} %`).join(', ')}. ` +
+        'Their rows stay empty. An Austrian property needs an Austrian target such as BMD, not this DATEV export',
+      value: foreign.join(','),
+    });
+  }
   return { rows: [...rows.values()].sort(byType), findings };
+}
+
+/** Positive VAT rates of the chart outside 5, 7, 16 and 19 %, in ascending order. */
+function foreignRates(accounts: readonly SourceAccount[]): number[] {
+  const rates = new Set(accounts.flatMap((a) => (a.vat && a.vat.percent > 0 && !GERMAN_VAT_RATES.includes(a.vat.percent) ? [a.vat.percent] : [])));
+  return [...rates].sort((a, b) => a - b);
 }
 
 function ruleValues(rule: TemplateRule | undefined, type: string, sachkontenlaenge: number) {
