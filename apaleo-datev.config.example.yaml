@@ -1,0 +1,109 @@
+# Konfiguration für apaleo-datev-export
+#
+# Kopiere diese Datei nach apaleo-datev.config.yaml und bearbeite sie. Das Tool
+# sucht die Datei aus --config, sonst aus APALEO_DATEV_CONFIG, sonst
+# ./apaleo-datev.config.yaml. JSON geht auch, wenn der Dateiname auf .json endet.
+#
+# Secrets kommen nie in diese Datei. Setze sie in der Umgebung (zum Beispiel in .env):
+#   APALEO_CLIENT_SECRET   das Client-Secret deiner apaleo Custom App
+#
+# Diese Einstellungen lassen sich auch aus der Umgebung setzen (nur einzelne Werte):
+#   APALEO_DATEV_OUTPUT_DIR       -> output.dir
+#   APALEO_CLIENT_ID              -> apaleo.clientId
+#   APALEO_DATEV_BERATERNUMMER    -> datev.beraternummer
+#   APALEO_DATEV_MANDANTENNUMMER  -> datev.mandantennummer
+#   APALEO_DATEV_TIMEZONE         -> schedule.timezone
+
+apaleo:
+  # Client-ID der Custom App, die du unter Apps > Connected apps angelegt hast.
+  # Trag sie hier ein oder setze APALEO_CLIENT_ID. Erforderliche Berechtigungen:
+  # siehe docs/setup-apaleo.md.
+  clientId:
+  # Nur für Clients, die Scopes statt Berechtigungen nutzen, zum Beispiel:
+  # scopes: accounting.read
+  # Ändere diese Werte nur, um gegen eine andere apaleo-Umgebung zu testen. Sie
+  # müssen https sein (einfaches http nur für localhost):
+  # baseUrl: https://api.apaleo.com
+  # identityUrl: https://identity.apaleo.com
+
+# Die beiden Nummern der Kanzlei bleiben absichtlich leer: Das Tool startet erst,
+# wenn du sie einträgst, damit keine erfundene Nummer in eine DATEV-Datei gerät.
+datev:
+  # Beraternummer deiner Steuerberatung (1001 bis 9999999). Frag die Kanzlei.
+  beraternummer:
+  # Mandantennummer des Hotels bei der Kanzlei (1 bis 99999).
+  mandantennummer:
+  # Sachkontenlänge im DATEV-Bestand der Kanzlei, 4 bis 8. Die meisten
+  # Mandanten mit SKR03/SKR04 nutzen 4.
+  sachkontenlaenge: 4
+  # Wirtschaftsjahresbeginn als MM-TT, zum Beispiel "07-01" für ein
+  # Wirtschaftsjahr von Juli bis Juni. Exporte reichen nie über ihn hinweg.
+  wjBeginn: "01-01"
+  # Kontenrahmen des Mandanten: "03" (SKR03) oder "04" (SKR04). Bleibt der Wert
+  # leer, nimmt das Tool den SKR aus der Kontenzuordnung, die init-mapping schreibt.
+  skr:
+  # 1 schreibt den importierten Stapel in DATEV fest (Festschreibung), 0 lässt
+  # ihn bearbeitbar. Frag die Kanzlei; 0 ist die sichere Wahl, solange du testest.
+  festschreibung: 0
+
+posting:
+  # Was in Belegfeld 1 steht, der Belegnummer, mit der DATEV offene Posten
+  # zuordnet: "receipt" nimmt den Beleg aus apaleo (Rechnung, Zahlungsreferenz)
+  # und sonst die Reservierungsreferenz; "reference" nimmt immer die
+  # Reservierungsreferenz.
+  belegfeld1: receipt
+
+output:
+  # Ordner für die erzeugten DATEV-Dateien, relativ zum Arbeitsverzeichnis.
+  dir: ./exports
+
+# Die apaleo-Hotels, mit denen das Tool arbeitet, jedes mit seiner Kontenzuordnung
+# (CSV, relativ zum Arbeitsverzeichnis; Standard ./mapping-<id>.csv). Leg die
+# Kontenzuordnung mit "apaleo-datev init-mapping --property BSP --skr 04" an und
+# lass sie von deiner Steuerberatung prüfen. Die IDs listet "apaleo-datev properties".
+# "apaleo-datev export --month 2026-10" exportiert jedes hier eingetragene Hotel;
+# ein Hotel, das die Kanzlei unter einer eigenen Mandantennummer bucht, setzt sie hier.
+# properties:
+#   - id: BSP
+#     mapping: ./mapping-BSP.csv
+#   - id: BSP2
+#     mapping: ./mapping-BSP2.csv
+#     mandantennummer: 43
+
+checks:
+  # Vergleicht das Buchungsjournal zusätzlich mit den Tagessummen von apaleo pro
+  # Hauptkonto und warnt bei Abweichungen (W-AGGREGATE-DIFF). Standardmäßig aus:
+  # Es braucht die optionale Berechtigung core.subledger_aggregate.create und
+  # eine zusätzliche Anfrage pro Tag.
+  aggregates: false
+
+# "apaleo-datev schedule --once" exportiert jeden fälligen Zeitraum, der noch nicht
+# im Ausgabeordner liegt, und endet. Starte es per Cron oder mit der Docker-Compose-
+# Schleife (docs/docker.md); stündlich ist unbedenklich.
+schedule:
+  # "Heute" ist das Datum in dieser IANA-Zeitzone. Auch APALEO_DATEV_TIMEZONE.
+  timezone: Europe/Berlin
+  # Ein Rhythmus pro Installation, damit nie tägliche und monatliche Dateien bei
+  # DATEV ankommen: "monthly" (ein Stapel pro Monat für die Kanzlei) oder "daily"
+  # (etwa 30 Importe im Monat).
+  cadence: monthly
+  monthly:
+    # Ein Monat ist ab diesem Tag des Folgemonats fällig (1 bis 5). Bei 1 oder 2
+    # wartet er bis zum 2. um 06:00 Uhr (siehe finalAfter).
+    dayOfMonth: 3
+  daily:
+    # Ein Tag ist so viele Tage später fällig (1 bis 3); 2 = vorgestern.
+    # Bei 1 wird gestern als "not yet final" gemeldet und später exportiert.
+    offsetDays: 2
+  # apaleo kann auf einen Tag noch buchen, bis der Tagesabschluss (Night Audit)
+  # den folgenden Tag schließt, und der läuft nach Mitternacht. Ein Zeitraum, der
+  # am Tag T endet, ist deshalb ab dieser Ortszeit am Tag T+2 abgeschlossen und
+  # wird dann exportiert ("00:00" bis "12:00", in Anführungszeichen). Bis dahin
+  # meldet das Tool ihn als "not yet final". Setze den Wert auf die Uhrzeit, zu
+  # der dein Tagesabschluss fertig ist.
+  finalAfter: "06:00"
+  # Wie viele Tage zurück ein verpasster Zeitraum nach einem Ausfall noch exportiert
+  # wird (mindestens 3 bei monatlich, 5 bei täglich). Beim ersten Lauf wird jeder
+  # Zeitraum exportiert, der in diesem Fenster fällig ist: Setze den Wert für den
+  # ersten Lauf niedriger, wenn ein früheres Tool diese Monate schon geliefert hat.
+  catchUpDays: 40

@@ -1,0 +1,63 @@
+schema: spec-driven
+
+context: |
+  Project: apaleo-datev-export. A free, MIT-licensed, open-source tool that exports
+  accounting data from the apaleo hotel PMS into DATEV-Format (EXTF) files that a
+  German Steuerberater imports into DATEV Rechnungswesen. It is a free alternative
+  to the paid DATEV connectors in the apaleo Store (EUR 24-51/month per property).
+  It is a gift to the community: no strings attached, no hosted service, no
+  warranty, no liability. "Just something that works."
+
+  Users: hotel back-office staff, small hotel groups, their Steuerberater, and
+  technical helpers. Each hotel runs its own copy against its own apaleo account
+  using an apaleo "custom app" (simple client, client credentials) that the hotel
+  admin registers under Apps > Connected apps. No apaleo Store listing, no apaleo
+  certification, no DATEV partnership: DATEV file import needs none.
+
+  Scope: one-way apaleo -> DATEV EXTF file export. Out of scope: DATEV online API
+  push (needs DATEV approval), hosted multi-tenant SaaS, web UI, GoBD-certified
+  archive, payment-provider (Adyen) settlement postings, other PMSs and other target
+  formats. Keep a clean SourceAdapter / Writer boundary so Mews, Smoobu, Stripe
+  sources or BMD / lexoffice targets can be added later by contributors.
+
+  Tech stack: TypeScript (strict), Node.js 24 LTS, pnpm, ESM. Minimal runtime
+  dependencies. Vitest for tests. CLI via a small arg parser. Config as a YAML or
+  JSON file plus environment variables for secrets. Account mapping as an editable
+  CSV. Installed from source (git clone + pnpm build) and as a locally built
+  Docker image; there is NO npm publish and NO registry image push in scope, so
+  do not add publish or release tasks. Scheduling is `schedule --once` run from
+  cron or a compose loop (no in-process daemon). Delivery: local output folder
+  only (no SMTP email in v1).
+
+  Domain sources of truth:
+  - apaleo Finance API Swagger: https://api.apaleo.com/swagger/finance-v1/swagger.json
+    (export-gross-daily, chart of accounts, aggregates) and the apaleo developer
+    docs for custom apps and OAuth client types.
+  - DATEV format description on developer.datev.de (header, Buchungsstapel,
+    character set); docs/datev-format.md records what was checked and when.
+  - docs/posting-rules.md for the posting logic (revenue by VAT rate, city tax,
+    payments to clearing accounts, deposits and prepayment VAT).
+  - ameax/datev-extf (MIT, PHP) as an independent cross-check of the field order.
+
+  Conventions: conventional commits; one OpenSpec change per vertical slice; every
+  slice ships with tests and keeps `pnpm test`, `pnpm lint`, `pnpm typecheck` green.
+  No real apaleo credentials exist yet: test against recorded/fabricated fixtures
+  shaped exactly like the apaleo Swagger schemas, and keep a live smoke-test command
+  for when a developer account exists. Never commit secrets.
+
+  README and docs: German-first. The audience is hotels and Steuerberater in DACH,
+  so README.md and every doc (docs/, CONTRIBUTING, SECURITY, CODE_OF_CONDUCT,
+  DISCLAIMER, CHANGELOG, GitHub templates, comments in the example configs) are
+  German only, address the reader with "du", and use DATEV terms as practitioners
+  do. One short README.en.md serves international contributors; no topic is kept in
+  two languages and there are no *.de.md files. Code, identifiers, CLI output and
+  commit messages stay English. The README H1 keeps "apaleo DATEV Export" and
+  "kostenlos" for search. Clear, plain language, copy-paste setup steps, prominent
+  "Keine Gewähr, keine Steuerberatung, lass deine Kontenzuordnung von deiner
+  Steuerberatung prüfen" disclaimer.
+
+rules:
+  proposal:
+    - Keep proposals under 400 words and include a Non-goals section
+  tasks:
+    - Tasks must be small, checkable, and each slice must end in a releasable state with tests

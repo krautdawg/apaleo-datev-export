@@ -1,0 +1,95 @@
+{
+  "transactions": [
+    {
+      "timestamp": "2026-09-22T22:05:00.0000000Z",
+      "date": "2026-09-22",
+      "debitedAccount": {
+        "name": "Receivables for Reservation BSP-MNOPQR-1",
+        "number": "BSP-MNOPQR-1_Receivables",
+        "type": "Receivables"
+      },
+      "creditedAccount": {
+        "name": "Accommodation 7%",
+        "number": "5011",
+        "type": "Revenues",
+        "parentNumber": "5010"
+      },
+      "command": "PostCharge",
+      "currency": "EUR",
+      "grossAmount": 150.0,
+      "netAmount": 140.19,
+      "taxes": [
+        {
+          "type": "Reduced",
+          "percent": 7.0,
+          "amount": 9.81
+        }
+      ],
+      "receipt": {
+        "type": "Reservation",
+        "number": "BSP-MNOPQR-1-V1"
+      },
+      "sourceEntryNumber": "BSPE0020",
+      "reference": "BSP-MNOPQR-1",
+      "referenceType": "Guest"
+    },
+    {
+      "timestamp": "2026-09-22T22:05:00.0000000Z",
+      "date": "2026-09-22",
+      "debitedAccount": {
+        "name": "Liabilities for Reservation BSP-MNOPQR-1",
+        "number": "BSP-MNOPQR-1_Liabilities",
+        "type": "Liabilities"
+      },
+      "creditedAccount": {
+        "name": "Receivables for Reservation BSP-MNOPQR-1",
+        "number": "BSP-MNOPQR-1_Receivables",
+        "type": "Receivables"
+      },
+      "command": "System",
+      "currency": "EUR",
+      "grossAmount": 150.0,
+      "netAmount": 150.0,
+      "receipt": {
+        "type": "Reservation",
+        "number": "BSP-MNOPQR-1-V1"
+      },
+      "sourceEntryNumber": "BSPE0021",
+      "reference": "BSP-MNOPQR-1",
+      "referenceType": "Guest"
+    },
+    {
+      "timestamp": "2026-09-22T22:05:00.1000000Z",
+      "date": "2026-09-22",
+      "debitedAccount": {
+        "name": "VAT on Liabilities 7%",
+        "number": "2107",
+        "type": "VatOnLiabilities",
+        "parentNumber": "2100"
+      },
+      "creditedAccount": {
+        "name": "Liabilities for Reservation BSP-MNOPQR-1",
+        "number": "BSP-MNOPQR-1_Liabilities",
+        "type": "Liabilities"
+      },
+      "command": "PostPrepaymentVat",
+      "currency": "EUR",
+      "grossAmount": 9.81,
+      "netAmount": 0.0,
+      "taxes": [
+        {
+          "type": "Reduced",
+          "percent": 7.0,
+          "amount": 9.81
+        }
+      ],
+      "receipt": {
+        "type": "Reservation",
+        "number": "BSP-MNOPQR-1-V1"
+      },
+      "sourceEntryNumber": "BSPE0022",
+      "reference": "BSP-MNOPQR-1",
+      "referenceType": "Guest"
+    }
+  ]
+}

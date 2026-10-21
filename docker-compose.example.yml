@@ -1,0 +1,37 @@
+# apaleo-datev-export mit Docker Compose. Siehe docs/docker.md.
+#
+#   cp .env.example .env            # dann APALEO_CLIENT_SECRET eintragen
+#   mkdir -p config data            # config/apaleo-datev.config.yaml und config/mapping-<id>.csv kommen nach ./config
+#   docker compose -f docker-compose.example.yml up -d --build
+#
+# Das Image wird hier aus dem Quellcode gebaut (build: .); es gibt kein Image in
+# einer Registry. Die Schleife ruft stündlich "schedule --once" auf: Es exportiert,
+# was fällig ist, und überspringt, was schon in ./data liegt, häufige Aufrufe
+# kosten also nichts.
+#
+# Mit Argumenten führt der Dienst stattdessen genau diesen einen Befehl aus und
+# endet, zum Beispiel aus Cron auf dem Host oder für einen einmaligen Export:
+#   docker compose -f docker-compose.example.yml run --rm apaleo-datev schedule --once
+#   docker compose -f docker-compose.example.yml run --rm apaleo-datev export --month 2026-10
+
+services:
+  apaleo-datev:
+    build: .
+    image: apaleo-datev-export:local
+    restart: unless-stopped
+    # tini als PID 1, damit "docker compose down" das sleep sofort beendet.
+    init: true
+    env_file: .env
+    volumes:
+      - ./config:/config:ro
+      - ./data:/data
+    entrypoint:
+      - sh
+      - -c
+      - |
+        if [ "$$#" -gt 0 ]; then exec node /app/dist/cli/main.js "$$@"; fi
+        while true; do
+          node /app/dist/cli/main.js schedule --once
+          sleep 3600
+        done
+      - apaleo-datev

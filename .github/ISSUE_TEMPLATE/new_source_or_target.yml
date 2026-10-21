@@ -1,0 +1,44 @@
+name: Neue Quelle oder neues Zielformat
+description: Schlag ein weiteres PMS oder eine Zahlungsquelle (Mews, Smoobu, Stripe, ...) oder ein weiteres Zielformat (BMD, lexoffice, ...) vor.
+labels: [new-source-or-target]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Quellen und Zielformate hängen an einer kleinen Schnittstelle; lies zuerst docs/architecture.md.
+        Füge nie echte API-Antworten mit Gästedaten ein: Anonymisiere Namen, Nummern und Beträge.
+  - type: dropdown
+    id: kind
+    attributes:
+      label: Art
+      options:
+        - Quelle (woher die Buchungen kommen)
+        - Zielformat (die Datei, die die Kanzlei importiert)
+    validations:
+      required: true
+  - type: input
+    id: system
+    attributes:
+      label: System
+      placeholder: Smoobu, Mews, Stripe, BMD NTCS, lexoffice, ...
+    validations:
+      required: true
+  - type: textarea
+    id: api
+    attributes:
+      label: Dokumentation der API oder des Dateiformats
+      description: Links zur offiziellen API-Referenz oder Formatbeschreibung, und wie ein Hotel Zugang bekommt (API-Schlüssel, OAuth-App, Partnerstatus?).
+    validations:
+      required: true
+  - type: textarea
+    id: mapping
+    attributes:
+      label: Buchhalterisches Modell
+      description: Führt das System ein Buchungsjournal mit Soll und Haben, oder muss der Adapter die Paare selbst bilden? Wie werden USt, Anzahlungen und Zahlungen abgebildet?
+  - type: checkboxes
+    id: help
+    attributes:
+      label: Mitarbeit
+      options:
+        - label: Ich kann anonymisierte Beispielantworten oder Beispieldateien beisteuern.
+        - label: Ich würde es gern umsetzen (siehe CONTRIBUTING.md und docs/architecture.md).

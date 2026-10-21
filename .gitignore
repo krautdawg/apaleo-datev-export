@@ -1,0 +1,28 @@
+node_modules/
+dist/
+coverage/
+.env
+.env.*
+!.env.example
+*.local.*
+out/
+exports/
+*.tsbuildinfo
+.DS_Store
+# a real config may hold customer numbers; only the example is committed
+/apaleo-datev.config.yaml
+/apaleo-datev.config.yml
+/apaleo-datev.config.json
+# docs/docker.md: the compose mounts and the host-cron log hold customer numbers,
+# the account mapping and exported bookkeeping data
+/config/
+/data/
+schedule.log
+# the install from source reads mapping-<property>.csv from the working directory
+/mapping-*.csv
+# export --demo writes here
+/demo-output/
+
+# Local agent tooling and archived OpenSpec planning notes (kept outside the public repo)
+.claude/
+openspec/changes/archive/

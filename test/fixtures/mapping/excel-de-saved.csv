@@ -1,0 +1,10 @@
+# Hand-built to the rules of Excel (DE) 'CSV (Trennzeichen-getrennt)': the written original (test/helpers/mapping.ts EXCEL_ORIGINAL_ROWS) opened with default column formats and saved again: Windows-1252 without BOM, semicolons, CRLF, leading zeros dropped from digit-only cells, quotes only around cells with a separator or a quote. Not produced in a real Excel installation.
+apaleo_account;apaleo_type;apaleo_name;apaleo_vat_percent;datev_account;bu_key;datev_vat_percent;kost1;kost2;comment
+5011;Revenues;Accommodation 7%;7;8300;;7;;;Vorschlag: Erlöse 7 % USt (Logis)
+5111;Revenues;Frühstück Speisen 7%;7;8300;;7;;;"Speisen; eigenes Konto mit Kanzlei klären"
+5121;Revenues;Getränke 19%;19;8400;;19;BAR;F&B;
+1611;Payments;Visa;;1360;;;;;"Karte ""Visa"" über Geldtransit"
+9000;House;House;;650;;;;;Testwert – Klasse-0-Konto mit führender Null
+*;Liabilities;;7;1711;;7;;;Anzahlungen 7 %
+1400;AccountsReceivable;Accounts Receivable;;10000;;;;;Sammeldebitor
+3501;CityTaxes;City Tax 0%;0;;;;;;Gast schuldet: 1590, 0 %. Betrieb schuldet: Erlös 7 % – mit Steuerberater entscheiden.

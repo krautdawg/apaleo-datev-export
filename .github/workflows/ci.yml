@@ -1,0 +1,96 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: typecheck, lint, test, build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+      - run: pnpm lint
+      - run: pnpm test
+      - run: pnpm build
+      - name: CLI smoke test
+        run: node dist/cli/main.js --help
+
+  readme-quickstart:
+    name: README quick start (install from source, help, demo)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      COREPACK_ENABLE_DOWNLOAD_PROMPT: '0'
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          # pnpm comes from the README's own `corepack enable`, so there is no pnpm yet to cache with.
+          package-manager-cache: false
+      - name: Extract the install block from the README
+        # The first sh block after <!-- quickstart -->, without the clone: the checkout is the clone.
+        run: |
+          awk '/<!-- quickstart -->/ { found = 1; next }
+               found && /^[[:space:]]*```sh/ { inblock = 1; next }
+               inblock && /^[[:space:]]*```/ { exit }
+               inblock { sub(/^[[:space:]]+/, ""); print }' README.md \
+            | grep -v -e '^git clone ' -e '^cd apaleo-datev-export$' > "$RUNNER_TEMP/quickstart.sh"
+          cat "$RUNNER_TEMP/quickstart.sh"
+          grep -qx 'pnpm install --frozen-lockfile' "$RUNNER_TEMP/quickstart.sh"
+          grep -q '^node dist/cli/main.js --help' "$RUNNER_TEMP/quickstart.sh"
+      - name: Run the README install commands verbatim
+        run: bash -euxo pipefail "$RUNNER_TEMP/quickstart.sh"
+      - name: Demo dry run without config, secret or network
+        run: node dist/cli/main.js export --month 2026-09 --demo --dry-run
+
+  docker:
+    name: docker image (build and run, never pushed)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      - run: docker build -t apaleo-datev-export:ci .
+      - run: docker run --rm apaleo-datev-export:ci --help
+      - run: docker run --rm apaleo-datev-export:ci --version
+      - run: docker run --rm apaleo-datev-export:ci export --month 2026-09 --demo --dry-run
+      - name: Real demo run with a /data volume, as in docs/docker.md
+        run: |
+          mkdir -p "$RUNNER_TEMP/demo-data"
+          sudo chown 1000:1000 "$RUNNER_TEMP/demo-data"
+          docker run --rm -w /data -v "$RUNNER_TEMP/demo-data:/data" apaleo-datev-export:ci export --month 2026-09 --demo
+          test -s "$RUNNER_TEMP/demo-data/demo-output/BSP/2026-09/EXTF_Buchungsstapel_1234567_42_20260901-20260930_BSP_DEMO.csv"
+          test -s "$RUNNER_TEMP/demo-data/demo-output/BSP/2026-09/manifest.json"
+      - name: Demo without a writable working directory names the fix
+        run: |
+          set +e
+          out="$(docker run --rm apaleo-datev-export:ci export --month 2026-09 --demo 2>&1)"
+          code=$?
+          set -e
+          echo "$out"
+          test "$code" -eq 1
+          grep -q -- '-w /data' <<<"$out"
+      - name: Runs as user node
+        run: test "$(docker run --rm --entrypoint id apaleo-datev-export:ci -un)" = node
+      - name: schedule without --once exits 2
+        run: |
+          set +e
+          docker run --rm apaleo-datev-export:ci schedule
+          test $? -eq 2

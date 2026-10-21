@@ -1,0 +1,26 @@
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+indent_style = space
+indent_size = 2
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.md]
+trim_trailing_whitespace = false
+
+# Golden DATEV files are Windows-1252 with CRLF, exactly as DATEV imports them.
+# The examples and the demo data are byte-identical copies of golden files and fixtures.
+[{test/golden/**,docs/examples/*.{csv,txt},examples/demo/**}]
+charset = unset
+end_of_line = unset
+insert_final_newline = unset
+trim_trailing_whitespace = unset
+
+# Mapping fixtures and templates are CSV files with CRLF, as Excel writes them.
+[{test/fixtures/mapping/**,templates/*.csv}]
+charset = unset
+end_of_line = unset
+trim_trailing_whitespace = unset

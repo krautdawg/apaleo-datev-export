@@ -1,0 +1,75 @@
+{
+  "aggregations": [
+    {
+      "account": {
+        "name": "Guest Receivables",
+        "number": "1200",
+        "type": "Receivables"
+      },
+      "creditedAmount": {
+        "amount": 363.8,
+        "currency": "EUR"
+      },
+      "debitedAmount": {
+        "amount": 5.0,
+        "currency": "EUR"
+      },
+      "balance": {
+        "amount": -358.8,
+        "currency": "EUR"
+      }
+    },
+    {
+      "account": {
+        "name": "Payments",
+        "number": "1000",
+        "type": "Payments"
+      },
+      "creditedAmount": {
+        "amount": 0.0,
+        "currency": "EUR"
+      },
+      "debitedAmount": {
+        "amount": 243.8,
+        "currency": "EUR"
+      },
+      "balance": {
+        "amount": 243.8,
+        "currency": "EUR"
+      }
+    },
+    {
+      "account": {
+        "name": "Accounts Receivable",
+        "number": "1400",
+        "type": "AccountsReceivable"
+      },
+      "creditedAmount": {
+        "amount": 0.0,
+        "currency": "EUR"
+      },
+      "debitedAmount": {
+        "amount": 115.0,
+        "currency": "EUR"
+      },
+      "balance": {
+        "amount": 115.0,
+        "currency": "EUR"
+      }
+    }
+  ],
+  "total": {
+    "creditedAmount": {
+      "amount": 363.8,
+      "currency": "EUR"
+    },
+    "debitedAmount": {
+      "amount": 363.8,
+      "currency": "EUR"
+    },
+    "balance": {
+      "amount": 0.0,
+      "currency": "EUR"
+    }
+  }
+}

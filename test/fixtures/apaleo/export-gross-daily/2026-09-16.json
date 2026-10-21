@@ -1,0 +1,145 @@
+{
+  "transactions": [
+    {
+      "timestamp": "2026-09-16T08:15:00.0000000Z",
+      "date": "2026-09-16",
+      "debitedAccount": {
+        "name": "Receivables for Reservation BSP-ABCDEF-1",
+        "number": "BSP-ABCDEF-1_Receivables",
+        "type": "Receivables"
+      },
+      "creditedAccount": {
+        "name": "Müller, Hans",
+        "number": "BSP-12345-1",
+        "parentNumber": "1200",
+        "type": "Receivables"
+      },
+      "command": "MoveLineItem",
+      "currency": "EUR",
+      "grossAmount": 5.0,
+      "netAmount": 5.0,
+      "taxes": [
+        {
+          "type": "Without",
+          "percent": 0.0,
+          "amount": 0.0
+        }
+      ],
+      "receipt": {
+        "type": "Reservation",
+        "number": "BSP-12345-1-V1"
+      },
+      "sourceEntryNumber": "BSPE0013",
+      "reference": "BSP-12345-1",
+      "referenceType": "Guest"
+    },
+    {
+      "timestamp": "2026-09-16T08:20:10.0000000Z",
+      "date": "2026-09-16",
+      "debitedAccount": {
+        "name": "Visa",
+        "number": "1611",
+        "type": "Payments",
+        "parentNumber": "1610"
+      },
+      "creditedAccount": {
+        "name": "Receivables for Reservation BSP-ABCDEF-1",
+        "number": "BSP-ABCDEF-1_Receivables",
+        "type": "Receivables"
+      },
+      "command": "PostPayment",
+      "currency": "EUR",
+      "grossAmount": 120.0,
+      "netAmount": 120.0,
+      "taxes": [],
+      "receipt": {
+        "type": "PspReference",
+        "number": "PSP-8823410003"
+      },
+      "sourceEntryNumber": "BSPE0014",
+      "reference": "BSP-ABCDEF-1",
+      "referenceType": "Guest"
+    },
+    {
+      "timestamp": "2026-09-16T08:21:00.0000000Z",
+      "date": "2026-09-16",
+      "debitedAccount": {
+        "name": "Cash",
+        "number": "1600",
+        "type": "Payments",
+        "parentNumber": "1000"
+      },
+      "creditedAccount": {
+        "name": "Receivables for Reservation BSP-ABCDEF-1",
+        "number": "BSP-ABCDEF-1_Receivables",
+        "type": "Receivables"
+      },
+      "command": "PostPayment",
+      "currency": "EUR",
+      "grossAmount": 23.8,
+      "netAmount": 23.8,
+      "taxes": [],
+      "receipt": {
+        "type": "Custom",
+        "number": "KASSE-0815"
+      },
+      "sourceEntryNumber": "BSPE0015",
+      "reference": "BSP-ABCDEF-1",
+      "referenceType": "Guest"
+    },
+    {
+      "timestamp": "2026-09-16T08:22:00.0000000Z",
+      "date": "2026-09-16",
+      "debitedAccount": {
+        "name": "Accounts Receivable",
+        "number": "1400",
+        "type": "AccountsReceivable"
+      },
+      "creditedAccount": {
+        "name": "Receivables for Reservation BSP-ABCDEF-1",
+        "number": "BSP-ABCDEF-1_Receivables",
+        "type": "Receivables"
+      },
+      "command": "PostToAccountsReceivables",
+      "currency": "EUR",
+      "grossAmount": 115.0,
+      "netAmount": 115.0,
+      "taxes": [],
+      "receipt": {
+        "type": "Invoice",
+        "number": "BSP-2026-000123"
+      },
+      "sourceEntryNumber": "BSPE0016",
+      "reference": "BSP-ABCDEF-1",
+      "referenceType": "Guest"
+    },
+    {
+      "timestamp": "2026-09-16T09:01:00.0000000+02:00",
+      "date": "2026-09-16",
+      "debitedAccount": {
+        "name": "Mastercard",
+        "number": "1612",
+        "type": "Payments",
+        "parentNumber": "1610"
+      },
+      "creditedAccount": {
+        "name": "Müller, Hans",
+        "number": "BSP-12345-1",
+        "parentNumber": "1200",
+        "type": "Receivables"
+      },
+      "command": "PostPayment",
+      "currency": "EUR",
+      "grossAmount": 100.0,
+      "netAmount": 100.0,
+      "taxes": [],
+      "receipt": {
+        "type": "PspReference",
+        "number": "PSP-8823410004"
+      },
+      "sourceEntryNumber": "BSPE0017",
+      "reference": "BSP-12345-1",
+      "referenceType": "Guest"
+    }
+  ]
+}

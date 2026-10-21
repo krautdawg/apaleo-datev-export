@@ -1,0 +1,693 @@
+{
+  "x-note": "Definitions copied verbatim (examples removed) from the apaleo Swagger documents below, downloaded 2026-10-20. test/apaleo/fixtures.test.ts validates every fixture in this folder against them.",
+  "x-sources": {
+    "finance": "https://api.apaleo.com/swagger/finance-v1/swagger.json",
+    "inventory": "https://api.apaleo.com/swagger/inventory-v1/swagger.json"
+  },
+  "definitions": {
+    "ExportGrossTransactionListModel": {
+      "type": "object",
+      "required": [
+        "transactions"
+      ],
+      "properties": {
+        "transactions": {
+          "type": "array",
+          "description": "List of transactions with all details.",
+          "items": {
+            "$ref": "#/definitions/ExportGrossTransactionItemModel"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "ChartOfAccountsModel": {
+      "type": "object",
+      "required": [
+        "bookingAccounts",
+        "externalAccounts",
+        "globalAccounts",
+        "guestAccounts"
+      ],
+      "properties": {
+        "globalAccounts": {
+          "type": "array",
+          "description": "The predefined list of global accounts of a property's subledger",
+          "items": {
+            "$ref": "#/definitions/SlimFinanceAccountModel"
+          }
+        },
+        "guestAccounts": {
+          "type": "array",
+          "description": "The predefined list of guest specific accounts of a property's subledger.",
+          "items": {
+            "$ref": "#/definitions/SlimFinanceAccountModel"
+          }
+        },
+        "externalAccounts": {
+          "type": "array",
+          "description": "The predefined list of external accounts of a property's subledger.",
+          "items": {
+            "$ref": "#/definitions/SlimFinanceAccountModel"
+          }
+        },
+        "bookingAccounts": {
+          "type": "array",
+          "description": "The predefined list of booking accounts of a property's subledger.",
+          "items": {
+            "$ref": "#/definitions/SlimFinanceAccountModel"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "AggregateTransactionListModel": {
+      "type": "object",
+      "required": [
+        "aggregations",
+        "total"
+      ],
+      "properties": {
+        "aggregations": {
+          "type": "array",
+          "description": "Aggregated data for the main accounts.",
+          "items": {
+            "$ref": "#/definitions/AggregateTransactionItemModel"
+          }
+        },
+        "total": {
+          "$ref": "#/definitions/AggregatesTotalModel"
+        }
+      },
+      "additionalProperties": false
+    },
+    "ExportGrossTransactionItemModel": {
+      "type": "object",
+      "required": [
+        "command",
+        "creditedAccount",
+        "currency",
+        "date",
+        "debitedAccount",
+        "grossAmount",
+        "netAmount",
+        "receipt",
+        "reference",
+        "referenceType",
+        "sourceEntryNumber",
+        "timestamp"
+      ],
+      "properties": {
+        "timestamp": {
+          "type": "string",
+          "description": "Timestamp with time zone information, when the booking was done<br />A date and time (without fractional second part) in UTC or with UTC offset as defined in <a href=\"https://en.wikipedia.org/wiki/ISO_8601\">ISO8601:2004</a>",
+          "format": "date-time"
+        },
+        "date": {
+          "type": "string",
+          "description": "The business date when the booking was done",
+          "format": "date",
+          "example": "2020-10-10"
+        },
+        "debitedAccount": {
+          "$ref": "#/definitions/ExportAccountModel"
+        },
+        "creditedAccount": {
+          "$ref": "#/definitions/ExportAccountModel"
+        },
+        "command": {
+          "type": "string",
+          "description": "The type of business transaction which triggered the booking",
+          "enum": [
+            "PostCharge",
+            "PostPayment",
+            "MoveLineItem",
+            "PostPrepayment",
+            "PostToAccountsReceivables",
+            "PostPrepaymentVat",
+            "PostToLossOfAccountsReceivables",
+            "System"
+          ]
+        },
+        "currency": {
+          "type": "string",
+          "description": "The currency of the transaction"
+        },
+        "grossAmount": {
+          "type": "number",
+          "description": "The gross amount being booked",
+          "format": "double"
+        },
+        "netAmount": {
+          "type": "number",
+          "description": "The net amount being booked",
+          "format": "double"
+        },
+        "taxes": {
+          "type": "array",
+          "description": "The taxes which make up the difference between net and gross amount",
+          "items": {
+            "$ref": "#/definitions/TaxAmountModel"
+          },
+          "x-nullable": true
+        },
+        "receipt": {
+          "$ref": "#/definitions/ReceiptModel"
+        },
+        "sourceEntryNumber": {
+          "type": "string",
+          "description": "The original raw transaction entry number which got converted to these one or 2 lines.",
+          "minLength": 1
+        },
+        "reference": {
+          "type": "string",
+          "description": "The reference for the transactions, reservation id for guest folios, booking id for booking folio, folio id for external folios, property code for the house folio"
+        },
+        "referenceType": {
+          "type": "string",
+          "description": "Does this transaction belong to a reservation, a house or an external folio",
+          "enum": [
+            "House",
+            "Guest",
+            "External",
+            "Booking"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "SlimFinanceAccountModel": {
+      "type": "object",
+      "required": [
+        "accountNumber",
+        "hasChildren",
+        "isArchived",
+        "name",
+        "type"
+      ],
+      "properties": {
+        "accountNumber": {
+          "type": "string",
+          "description": "The account number. Unique identifier within one property.",
+          "minLength": 1
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the account.",
+          "minLength": 1
+        },
+        "type": {
+          "type": "string",
+          "description": "The type of account.",
+          "enum": [
+            "Revenues",
+            "Payments",
+            "Liabilities",
+            "Receivables",
+            "Vat",
+            "House",
+            "AccountsReceivable",
+            "CityTaxes",
+            "TransitoryItems",
+            "VatOnLiabilities",
+            "LossOfAccountsReceivable",
+            "SecondCityTax",
+            "GuestLevies"
+          ]
+        },
+        "parentNumber": {
+          "type": "string",
+          "description": "Parent account number. Null for top-level accounts.",
+          "x-nullable": true
+        },
+        "hasChildren": {
+          "type": "boolean",
+          "description": "Indicates whether this account has children / sub accounts or not."
+        },
+        "isArchived": {
+          "type": "boolean",
+          "description": "Indicates whether this account is archived ot not."
+        },
+        "vat": {
+          "$ref": "#/definitions/VatItemModel"
+        },
+        "subAccounts": {
+          "type": "array",
+          "description": "Sub accounts for this accounts.",
+          "items": {
+            "$ref": "#/definitions/SlimFinanceAccountModel"
+          },
+          "x-nullable": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "AggregateTransactionItemModel": {
+      "type": "object",
+      "required": [
+        "account",
+        "balance",
+        "creditedAmount",
+        "debitedAmount"
+      ],
+      "properties": {
+        "account": {
+          "$ref": "#/definitions/ExportAccountModel"
+        },
+        "creditedAmount": {
+          "$ref": "#/definitions/PreciseMonetaryValueModel"
+        },
+        "debitedAmount": {
+          "$ref": "#/definitions/PreciseMonetaryValueModel"
+        },
+        "balance": {
+          "$ref": "#/definitions/PreciseMonetaryValueModel"
+        }
+      },
+      "additionalProperties": false
+    },
+    "AggregatesTotalModel": {
+      "type": "object",
+      "required": [
+        "balance",
+        "creditedAmount",
+        "debitedAmount"
+      ],
+      "properties": {
+        "creditedAmount": {
+          "$ref": "#/definitions/PreciseMonetaryValueModel"
+        },
+        "debitedAmount": {
+          "$ref": "#/definitions/PreciseMonetaryValueModel"
+        },
+        "balance": {
+          "$ref": "#/definitions/PreciseMonetaryValueModel"
+        }
+      },
+      "additionalProperties": false
+    },
+    "ExportAccountModel": {
+      "type": "object",
+      "required": [
+        "name",
+        "number",
+        "type"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The account name",
+          "minLength": 1
+        },
+        "number": {
+          "type": "string",
+          "description": "The account number",
+          "minLength": 1
+        },
+        "parentNumber": {
+          "type": "string",
+          "description": "The number of the parent account",
+          "x-nullable": true
+        },
+        "type": {
+          "type": "string",
+          "description": "The account type",
+          "enum": [
+            "Revenues",
+            "Payments",
+            "Liabilities",
+            "Receivables",
+            "Vat",
+            "House",
+            "AccountsReceivable",
+            "CityTaxes",
+            "TransitoryItems",
+            "VatOnLiabilities",
+            "LossOfAccountsReceivable",
+            "SecondCityTax",
+            "GuestLevies"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "TaxAmountModel": {
+      "type": "object",
+      "required": [
+        "amount",
+        "percent",
+        "type"
+      ],
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "The VAT type",
+          "enum": [
+            "Null",
+            "VeryReduced",
+            "Reduced",
+            "Normal",
+            "Without",
+            "Special",
+            "Special1",
+            "Special2",
+            "ReducedCovid19",
+            "NormalCovid19",
+            "Mixed"
+          ]
+        },
+        "percent": {
+          "type": "number",
+          "description": "The currently valid percent to calculate the VAT",
+          "format": "double"
+        },
+        "amount": {
+          "type": "number",
+          "description": "The tax amount",
+          "format": "double"
+        }
+      },
+      "additionalProperties": false
+    },
+    "ReceiptModel": {
+      "type": "object",
+      "required": [
+        "number"
+      ],
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "The type of receipt.",
+          "enum": [
+            "Custom",
+            "Reservation",
+            "Invoice",
+            "PspReference"
+          ]
+        },
+        "number": {
+          "type": "string",
+          "description": "The receipt number.",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "VatItemModel": {
+      "type": "object",
+      "required": [
+        "percent",
+        "type"
+      ],
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "The VAT type",
+          "enum": [
+            "Null",
+            "VeryReduced",
+            "Reduced",
+            "Normal",
+            "Without",
+            "Special",
+            "Special1",
+            "Special2",
+            "ReducedCovid19",
+            "NormalCovid19",
+            "Mixed"
+          ]
+        },
+        "percent": {
+          "type": "number",
+          "description": "The currently valid percent to calculate the VAT",
+          "format": "double"
+        }
+      },
+      "additionalProperties": false
+    },
+    "PreciseMonetaryValueModel": {
+      "type": "object",
+      "description": "Use this model in all accounting reports",
+      "required": [
+        "amount",
+        "currency"
+      ],
+      "properties": {
+        "amount": {
+          "type": "number",
+          "format": "double"
+        },
+        "currency": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "PropertyListModel": {
+      "type": "object",
+      "required": [
+        "count",
+        "properties"
+      ],
+      "properties": {
+        "properties": {
+          "type": "array",
+          "description": "List of properties",
+          "items": {
+            "$ref": "#/definitions/PropertyItemModel"
+          }
+        },
+        "count": {
+          "type": "integer",
+          "description": "Total count of items",
+          "format": "int64"
+        }
+      },
+      "additionalProperties": false
+    },
+    "PropertyItemModel": {
+      "type": "object",
+      "required": [
+        "code",
+        "commercialRegisterEntry",
+        "companyName",
+        "created",
+        "currencyCode",
+        "id",
+        "isArchived",
+        "isTemplate",
+        "location",
+        "name",
+        "paymentTerms",
+        "status",
+        "taxId",
+        "timeZone"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "The property id"
+        },
+        "code": {
+          "type": "string",
+          "description": "The code for the property that can be shown in reports and table views"
+        },
+        "propertyTemplateId": {
+          "type": "string",
+          "description": "The id of the property used as a template while creating the property",
+          "x-nullable": true
+        },
+        "isTemplate": {
+          "type": "boolean",
+          "description": "Whether the property can be used as a template for other properties"
+        },
+        "name": {
+          "type": "string",
+          "description": "The name for the property",
+          "minLength": 1
+        },
+        "description": {
+          "type": "string",
+          "description": "The description for the property",
+          "x-nullable": true
+        },
+        "companyName": {
+          "type": "string",
+          "description": "The legal name of the company running the property.",
+          "minLength": 1
+        },
+        "managingDirectors": {
+          "type": "string",
+          "description": "The managing director(s) of the company, as they should appear on invoices",
+          "x-nullable": true
+        },
+        "commercialRegisterEntry": {
+          "type": "string",
+          "description": "The entry in the Commercial Register of the company running the property, as it should appear on invoices",
+          "minLength": 1
+        },
+        "taxId": {
+          "type": "string",
+          "description": "The Tax-ID of the company running the property, as it should appear on invoices",
+          "minLength": 1
+        },
+        "location": {
+          "$ref": "#/definitions/AddressModel"
+        },
+        "bankAccount": {
+          "$ref": "#/definitions/BankAccountModel"
+        },
+        "paymentTerms": {
+          "type": "object",
+          "description": "The payment terms used for all rate plans",
+          "additionalProperties": {
+            "type": "string",
+            "x-nullable": true
+          }
+        },
+        "timeZone": {
+          "type": "string",
+          "description": "The time zone name of the property from the IANA Time Zone Database.\n(see: https://en.wikipedia.org/wiki/List_of_tz_database_time_zones)",
+          "minLength": 1
+        },
+        "currencyCode": {
+          "type": "string",
+          "description": "The currency a property works with."
+        },
+        "created": {
+          "type": "string",
+          "description": "Date of creation<br />A date and time (without fractional second part) in UTC or with UTC offset as defined in <a href=\"https://en.wikipedia.org/wiki/ISO_8601\">ISO8601:2004</a>",
+          "format": "date-time"
+        },
+        "status": {
+          "type": "string",
+          "description": "The status of the property",
+          "enum": [
+            "Test",
+            "Live"
+          ]
+        },
+        "isArchived": {
+          "type": "boolean",
+          "description": "Is the property archived"
+        },
+        "actions": {
+          "type": "array",
+          "description": "The list of actions for this property",
+          "items": {
+            "$ref": "#/definitions/ActionModel[PropertyAction,NotAllowedPropertyActionReason]"
+          },
+          "x-nullable": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "AddressModel": {
+      "type": "object",
+      "required": [
+        "addressLine1",
+        "city",
+        "countryCode",
+        "postalCode"
+      ],
+      "properties": {
+        "addressLine1": {
+          "type": "string",
+          "minLength": 1
+        },
+        "addressLine2": {
+          "type": "string",
+          "x-nullable": true
+        },
+        "postalCode": {
+          "type": "string",
+          "minLength": 1
+        },
+        "city": {
+          "type": "string",
+          "minLength": 1
+        },
+        "regionCode": {
+          "type": "string",
+          "x-nullable": true
+        },
+        "countryCode": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "BankAccountModel": {
+      "type": "object",
+      "properties": {
+        "iban": {
+          "type": "string",
+          "x-nullable": true
+        },
+        "bic": {
+          "type": "string",
+          "x-nullable": true
+        },
+        "bank": {
+          "type": "string",
+          "x-nullable": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "ActionModel[PropertyAction,NotAllowedPropertyActionReason]": {
+      "type": "object",
+      "required": [
+        "action",
+        "isAllowed"
+      ],
+      "properties": {
+        "action": {
+          "type": "string",
+          "enum": [
+            "Delete",
+            "Archive",
+            "SetLive",
+            "Reset"
+          ]
+        },
+        "isAllowed": {
+          "type": "boolean"
+        },
+        "reasons": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ActionReasonModel[NotAllowedPropertyActionReason]"
+          },
+          "x-nullable": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "ActionReasonModel[NotAllowedPropertyActionReason]": {
+      "type": "object",
+      "required": [
+        "code",
+        "message"
+      ],
+      "properties": {
+        "code": {
+          "type": "string",
+          "enum": [
+            "DeleteNotAllowedForPropertyNotInStatusTest",
+            "ArchiveNotAllowedForPropertyNotInStatusLive",
+            "ArchiveNotAllowedForPropertyWhichIsAlreadyArchived",
+            "SetToLiveNotAllowedForPropertyNotInStatusTest",
+            "SetToLiveNotAllowedForPropertyInNonLiveAccount",
+            "ResetNotAllowedForPropertyNotInStatusTest"
+          ]
+        },
+        "message": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

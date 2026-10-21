@@ -1,0 +1,26 @@
+# apaleo-datev Kontenzuordnung, Vorlage skr03-hotel@1, Sachkontenlänge 4. Hotel Beispiel (BSP), aus init-mapping erzeugt; Kurtaxe als Durchlaufender Posten 1590 ergänzt, Kostenstelle BAR auf Getränken.
+apaleo_account;apaleo_type;apaleo_name;apaleo_vat_percent;datev_account;bu_key;datev_vat_percent;kost1;kost2;comment
+5011;Revenues;Accommodation 7%;7;8300;;7;;;Erlöse 7 % USt (Logis)
+5019;Revenues;Accommodation 19%;19;8400;;19;;;Erlöse 19 % USt
+5111;Revenues;Food 7%;7;8300;;7;;;Speisen 7 % ab 2026-01-01
+5121;Revenues;Beverages 19%;19;8400;;19;BAR;;Getränke 19 %
+5919;Revenues;Other Revenues 19%;19;8400;;19;;;
+5990;Revenues;Other Revenues 0%;0;8200;;0;;;Erlöse ohne USt
+1600;Payments;Cash;;1000;;;;;Kasse
+1611;Payments;Visa;;1360;;;;;Geldtransit
+1612;Payments;Mastercard;;1360;;;;;Geldtransit
+*;Payments;;;1360;;;;;Geldtransit
+3007;Liabilities;Guest Liabilities 7%;7;1711;;7;;;Versteuerte Anzahlungen 7 %
+3019;Liabilities;Guest Liabilities 19%;19;1718;;19;;;Versteuerte Anzahlungen 19 %
+*;Liabilities;;7;1711;;7;;;Versteuerte Anzahlungen 7 %
+*;Liabilities;;19;1718;;19;;;Versteuerte Anzahlungen 19 %
+*;Liabilities;;0;1719;;0;;;Anzahlungen ohne USt
+1200;Receivables;Guest Receivables;;1410;;;;;Forderungen ohne Kontokorrent
+*;Receivables;;;1410;;;;;Forderungen ohne Kontokorrent
+2007;Vat;VAT 7%;7;;;;;;wird übersprungen
+2019;Vat;VAT 19%;19;;;;;;wird übersprungen
+9000;House;House;;;;;;;
+1400;AccountsReceivable;Accounts Receivable;;10000;;;;;Sammeldebitor
+3501;CityTaxes;City Tax 0%;0;1590;;0;;;Kurtaxe, Gast schuldet: Durchlaufende Posten
+2107;VatOnLiabilities;VAT on Liabilities 7%;7;;;;;;wird übersprungen
+2119;VatOnLiabilities;VAT on Liabilities 19%;19;;;;;;wird übersprungen

@@ -1,0 +1,65 @@
+name: Fehlerbericht
+description: Etwas funktioniert nicht so, wie die Dokumentation sagt.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Danke für deine Meldung. **Füge nie Secrets oder Gästedaten ein.** Entferne vor dem Absenden das apaleo-Client-Secret
+        und Tokens, Gästenamen, E-Mail-Adressen, Reservierungs- und Rechnungsnummern und echte Berater- oder Mandantennummern.
+        Sicherheitsprobleme gehören nicht hierher, sondern in ein privates Security Advisory (siehe SECURITY.md).
+
+        Meldungen auf Englisch sind ebenfalls willkommen.
+  - type: input
+    id: version
+    attributes:
+      label: Version des Tools
+      description: Die Ausgabe von `apaleo-datev --version` (oder `node dist/cli/main.js --version`) und der Commit, falls du ihn kennst.
+      placeholder: 0.1.0, Commit abc1234
+    validations:
+      required: true
+  - type: dropdown
+    id: install
+    attributes:
+      label: Wie startest du es?
+      options:
+        - Aus dem Quellcode (node dist/cli/main.js)
+        - Docker-Compose-Beispiel
+        - Einfaches docker run
+        - Anders
+    validations:
+      required: true
+  - type: textarea
+    id: command
+    attributes:
+      label: Befehl
+      description: Der genaue Befehl, den du ausgeführt hast, mit allen Optionen.
+      render: sh
+      placeholder: apaleo-datev export --month 2026-10 --dry-run
+    validations:
+      required: true
+  - type: input
+    id: findings
+    attributes:
+      label: Befund-Codes
+      description: Jeder Code, den das Tool ausgegeben hat, zum Beispiel E-UNMAPPED, W-VAT-ROUNDING. Siehe docs/troubleshooting.md.
+      placeholder: E-VAT-RATE, W-RECENT-DAY
+  - type: textarea
+    id: expected
+    attributes:
+      label: Was ist passiert, und was hast du erwartet?
+    validations:
+      required: true
+  - type: textarea
+    id: output
+    attributes:
+      label: Anonymisierte Ausgabe
+      description: Die Ausgabe oder der passende Teil des Protokolls, mit ersetzten Namen, Nummern und Beträgen.
+      render: text
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: Vor dem Absenden
+      options:
+        - label: Ich habe jedes Secret, jedes Token und alle Gästedaten aus dieser Meldung entfernt.
+          required: true

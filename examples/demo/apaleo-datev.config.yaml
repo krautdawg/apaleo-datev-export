@@ -1,0 +1,11 @@
+# Config of "apaleo-datev export --demo". The demo reads only this file, never
+# your own config or environment. The numbers are made up: never import a demo
+# file into a real DATEV Mandant.
+datev:
+  beraternummer: 1234567
+  mandantennummer: 42
+  sachkontenlaenge: 4
+properties:
+  - id: BSP
+    # Relative to this folder (examples/demo/).
+    mapping: mapping-BSP.csv

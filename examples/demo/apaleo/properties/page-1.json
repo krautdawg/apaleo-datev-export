@@ -1,0 +1,55 @@
+{
+  "properties": [
+    {
+      "id": "BSP",
+      "code": "BSP",
+      "isTemplate": false,
+      "name": "Hotel Beispiel",
+      "description": "Hotel Beispiel, a fabricated 20-room hotel for tests",
+      "companyName": "Beispiel Hotelbetriebs GmbH",
+      "commercialRegisterEntry": "HRB 000000 (fictitious)",
+      "taxId": "DE000000000",
+      "location": {
+        "addressLine1": "Musterstraße 1",
+        "postalCode": "12345",
+        "city": "Musterstadt",
+        "countryCode": "DE"
+      },
+      "paymentTerms": {
+        "de": "Zahlbar bei Anreise",
+        "en": "Payment on arrival"
+      },
+      "timeZone": "Europe/Berlin",
+      "currencyCode": "EUR",
+      "created": "2026-01-05T09:00:00Z",
+      "status": "Live",
+      "isArchived": false
+    },
+    {
+      "id": "HBW",
+      "code": "HBW",
+      "isTemplate": false,
+      "name": "Hotel Beispiel Wien",
+      "description": "Hotel Beispiel Wien, a fabricated 20-room hotel for tests",
+      "companyName": "Beispiel Hotelbetriebs GmbH",
+      "commercialRegisterEntry": "HRB 000000 (fictitious)",
+      "taxId": "DE000000000",
+      "location": {
+        "addressLine1": "Beispielgasse 2",
+        "postalCode": "1010",
+        "city": "Wien",
+        "countryCode": "AT"
+      },
+      "paymentTerms": {
+        "de": "Zahlbar bei Anreise",
+        "en": "Payment on arrival"
+      },
+      "timeZone": "Europe/Vienna",
+      "currencyCode": "EUR",
+      "created": "2026-01-05T09:00:00Z",
+      "status": "Live",
+      "isArchived": false
+    }
+  ],
+  "count": 2
+}

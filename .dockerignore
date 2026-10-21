@@ -1,0 +1,12 @@
+# Only what the image build needs goes into the build context.
+*
+!package.json
+!pnpm-lock.yaml
+!tsconfig.json
+!tsconfig.build.json
+!src/
+!templates/
+!examples/demo/
+!LICENSE
+!DISCLAIMER.md
+!README.md

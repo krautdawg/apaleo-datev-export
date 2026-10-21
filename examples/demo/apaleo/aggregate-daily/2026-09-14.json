@@ -1,0 +1,113 @@
+{
+  "aggregations": [
+    {
+      "account": {
+        "name": "Payments",
+        "number": "1000",
+        "type": "Payments"
+      },
+      "creditedAmount": {
+        "amount": 0.0,
+        "currency": "EUR"
+      },
+      "debitedAmount": {
+        "amount": 200.0,
+        "currency": "EUR"
+      },
+      "balance": {
+        "amount": 200.0,
+        "currency": "EUR"
+      }
+    },
+    {
+      "account": {
+        "name": "Guest Liabilities",
+        "number": "3000",
+        "type": "Liabilities"
+      },
+      "creditedAmount": {
+        "amount": 200.0,
+        "currency": "EUR"
+      },
+      "debitedAmount": {
+        "amount": 0.0,
+        "currency": "EUR"
+      },
+      "balance": {
+        "amount": -200.0,
+        "currency": "EUR"
+      }
+    },
+    {
+      "account": {
+        "name": "Guest Receivables",
+        "number": "1200",
+        "type": "Receivables"
+      },
+      "creditedAmount": {
+        "amount": 0.0,
+        "currency": "EUR"
+      },
+      "debitedAmount": {
+        "amount": 143.8004,
+        "currency": "EUR"
+      },
+      "balance": {
+        "amount": 143.8004,
+        "currency": "EUR"
+      }
+    },
+    {
+      "account": {
+        "name": "Revenues",
+        "number": "5000",
+        "type": "Revenues"
+      },
+      "creditedAmount": {
+        "amount": 138.8004,
+        "currency": "EUR"
+      },
+      "debitedAmount": {
+        "amount": 0.0,
+        "currency": "EUR"
+      },
+      "balance": {
+        "amount": -138.8004,
+        "currency": "EUR"
+      }
+    },
+    {
+      "account": {
+        "name": "City Tax",
+        "number": "3500",
+        "type": "CityTaxes"
+      },
+      "creditedAmount": {
+        "amount": 5.0,
+        "currency": "EUR"
+      },
+      "debitedAmount": {
+        "amount": 0.0,
+        "currency": "EUR"
+      },
+      "balance": {
+        "amount": -5.0,
+        "currency": "EUR"
+      }
+    }
+  ],
+  "total": {
+    "creditedAmount": {
+      "amount": 343.8004,
+      "currency": "EUR"
+    },
+    "debitedAmount": {
+      "amount": 343.8004,
+      "currency": "EUR"
+    },
+    "balance": {
+      "amount": 0.0,
+      "currency": "EUR"
+    }
+  }
+}
