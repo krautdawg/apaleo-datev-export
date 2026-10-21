@@ -1,0 +1,121 @@
+## MODIFIED Requirements
+
+### Requirement: Account resolution order
+For a ledger account the tool SHALL resolve the mapping row in this order: exact number and type; exact number with any type; the parent account chain with the same type, where a parent row with an empty `datev_account` SHALL NOT end the search but SHALL be passed over; for VAT-relevant types (Liabilities, CityTaxes, SecondCityTax, GuestLevies, LossOfAccountsReceivable, Vat, VatOnLiabilities) a wildcard row `*` for the type whose `apaleo_vat_percent` equals the line's normalised tax rate; for other types a wildcard row `*` for the type. An exact row (number and type, or number with any type) with an empty `datev_account` SHALL still mean "unmapped". When no row with a DATEV account is found, the first empty parent row passed over SHALL be returned so that findings can name it. Wildcard rows without a VAT rate SHALL be rejected for VAT-relevant types, and wildcard rows of type Revenues SHALL be rejected with or without a rate.
+
+#### Scenario: Per-reservation account with a parent
+- **WHEN** a ledger line debits account `BSP-12345-1` of type Receivables with parent `1200`, and the mapping has a row for `1200` Receivables
+- **THEN** the line resolves to the row for `1200`
+
+#### Scenario: Per-reservation accounts without a parent
+- **WHEN** a ledger line debits `BSP-ABCDEF-1_Receivables` (type Receivables, no `parentNumber`, not in the chart) and credits `BSP-ABCDEF-1_Liabilities` (type Liabilities, no `parentNumber`) with a 7 % tax entry, and the mapping has a `*` Receivables row and a `*` Liabilities row with `apaleo_vat_percent` 7
+- **THEN** the debit resolves to the Receivables wildcard and the credit to the 7 % Liabilities wildcard
+
+#### Scenario: Empty parent row does not hide the wildcards
+- **WHEN** a v0.1.0 mapping has the row `3000;Liabilities;Liabilities;;;;;;;` with an empty DATEV account and the wildcard rows `*;Liabilities;;7;1711;;7`, `*;Liabilities;;19;1718;;19` and `*;Liabilities;;0;1719;;0`, and a prepayment credits `EPEBVUIU-1_Liabilities/Reduced:7.00` (parent `3000`) at 7 %
+- **THEN** the account resolves to the 7 % wildcard (1711), and a 0 % line on `EPEBVUIU-1_Liabilities/Null:0.00` resolves to 1719
+
+#### Scenario: Exact empty row stays unmapped
+- **WHEN** the mapping has `RevenueNoShow_Reduced:7.00;Revenues;…;7;;;;;;` with an empty DATEV account and a line credits that account
+- **THEN** the account is unmapped and the finding asks to fill in `datev_account` on that row's line
+
+#### Scenario: Liabilities wildcard without rate rejected
+- **WHEN** the mapping contains a `*` row of type Liabilities with an empty `apaleo_vat_percent`
+- **THEN** loading fails with an error saying that VAT-relevant wildcards must name a VAT rate
+
+#### Scenario: Wildcard for payments
+- **WHEN** a new payment-method account appears and the mapping has a `*` Payments row
+- **THEN** the account resolves to the wildcard row
+
+#### Scenario: Wildcard for accounts receivable
+- **WHEN** a line debits `ZAQSEFYC-1_AccountsReceivable` (parent `9999`, not in the chart), the mapping has no row for `9999` and has the row `*;AccountsReceivable;;;10000`
+- **THEN** the account resolves to the collective debtor 10000, and so does `ZAQSEFYC-1_AccountsReceivable/Offset`
+
+#### Scenario: Wildcard for revenue rejected
+- **WHEN** the mapping contains a `*` row of type Revenues
+- **THEN** loading fails with an error explaining that revenue accounts must be mapped one by one because of VAT
+
+### Requirement: Unmapped accounts block the export
+The tool SHALL refuse to produce a DATEV file when any account booked in the period does not resolve to a row with a DATEV account, and SHALL list each such account with number, type, name, number of lines and gross total. Accounts outside the chart that have a parent (per-reservation and folio accounts) SHALL be reported once per parent, type and VAT rate, with the number of such accounts and up to three examples, not once per reservation. The fix SHALL name the row to change: for an exact row with an empty DATEV account, that row's line; for accounts reached through an empty parent row, that parent row and its line together with the wildcard row to add (for VAT-relevant types a `*` row for the type and rate, with the template's account as example, never "fill in the parent row"; for other types the parent row or a `*` row for the type). `mapping check --from --to` SHALL resolve each line with the rate the posting rules use, including the inferred rate of an untaxed deposit release.
+
+#### Scenario: Untaxed deposit release
+- **WHEN** the period contains a deposit release (debit Liabilities, credit Receivables, no tax entries) with a `PostPrepaymentVat` line of the same day and reference at 7 %, and the mapping has rate wildcards for Liabilities at 7 % and 0 %
+- **THEN** `mapping check --from --to` resolves the release through the 7 % wildcard, never through the 0 % wildcard, reports nothing for it, and exits with code 0 if nothing else fails
+
+#### Scenario: Untaxed deposit release without a rate source
+- **WHEN** the period contains such a deposit release without a matching `PostPrepaymentVat` line, and the chart gives its Liabilities account no VAT rate
+- **THEN** `mapping check --from --to` reports `E-VAT-RATE-UNKNOWN` once for all such lines, does not mention the 0 % row, and exits with code 1
+
+#### Scenario: Untaxed deposit release without deposit rows
+- **WHEN** the rate of such a deposit release is inferred as 19 % and the mapping has no Liabilities row for 19 % that applies to it
+- **THEN** `mapping check --from --to` reports `E-UNMAPPED` for the Liabilities account and suggests a `*` Liabilities row at 19 %
+
+#### Scenario: Parent row with the wrong VAT rate
+- **WHEN** an SKR03 mapping has only the parent row `5000;Revenues;Revenues;;8400` and the period books accommodation (`5011`) and food (`5111`) at 7 %
+- **THEN** `mapping check --from --to` reports `E-VAT-MISMATCH` for `5011` and `5111` (booked at 7 %, DATEV applies 19 % on `8400`) and exits with code 1; a Grman row `5000;8400` is checked the same way
+
+#### Scenario: New revenue account
+- **WHEN** the period contains lines on revenue account `5010` that has no mapping row
+- **THEN** the check fails with exit code 1 and a finding `E-UNMAPPED` naming `5010`, its type, its name, the line count and the gross total, and no file is written
+
+#### Scenario: Deposits under an empty parent without wildcards
+- **WHEN** the mapping has the empty row `3000;Liabilities` on line 67 and no Liabilities wildcards, and the period books five per-reservation Liabilities accounts at 7 %
+- **THEN** one `E-UNMAPPED` finding names parent `3000`, line 67, five accounts with up to three examples, and the fix "add a wildcard row `*;Liabilities;;7;<DATEV account>;;7` (template: 1711)", and it does not ask to fill in line 67
+
+#### Scenario: Accounts receivable without a row
+- **WHEN** the mapping has neither a `9999` row nor an AccountsReceivable wildcard and the period books `ZAQSEFYC-1_AccountsReceivable` and its `/Offset`
+- **THEN** one `E-UNMAPPED` finding names parent `9999` (AccountsReceivable) with both accounts and suggests a `9999` row or `*;AccountsReceivable;;;10000` (collective debtor)
+
+### Requirement: SKR03 and SKR04 hotel templates
+The tool SHALL ship rule-based templates for SKR03 and SKR04 (version 2: `skr03-hotel@2`, `skr04-hotel@2`) that map, by apaleo type, VAT percent and account-name pattern: accommodation revenue at 7 %, food revenue at 7 %, no-show and cancellation-fee revenue at 7 % (SKR03 8300, SKR04 4300, with a comment that apaleo's rate decides the DATEV rate and the Kanzlei decides taxability), drinks and other revenue at 19 %, non-taxable revenue, cash and non-cash payments to clearing accounts, guest and external receivables, every accounts-receivable account through a wildcard row to a collective debtor, deposits by VAT rate through wildcard rows, and bad debt by VAT rate through wildcard rows. Revenue and Liabilities accounts at the historical 2020 rates 16 % and 5 % SHALL be written with an empty DATEV account and a comment explaining that they belong to 1 July to 31 December 2020, that a booking on them stops the export, and that exports for 2020 need the Kanzlei. The templates SHALL NOT write a row for a container account outside the global ledger (`hasChildren`) when its type has wildcard rules and no rule yields a DATEV account for it (Liabilities `3000`, `CollectiveDebitor_LossOfAccountsReceivable`): the wildcard rows cover its per-reservation children, and one DATEV account cannot serve every rate. City tax, second city tax and guest levies SHALL be written with an empty DATEV account and a comment describing the guest-owed and operator-owed options. Template rows SHALL have no BU key, SHALL be written with 4-digit base numbers and scaled to the configured Sachkontenlänge with trailing zeros (reported as a note), SHALL each be marked as a suggestion to be confirmed by the Steuerberater, and accounts that no rule matches SHALL stay unmapped. When the chart has positive VAT rates other than 5, 7, 16 and 19 %, `init-mapping` SHALL print `N-FOREIGN-VAT-RATES` naming them and saying that the German templates and Automatikkonten do not cover them.
+
+#### Scenario: Template does not guess
+- **WHEN** the chart contains a House account and a TransitoryItems account
+- **THEN** the generated rows for them have an empty DATEV account and an explanatory comment
+
+#### Scenario: City tax is not pre-filled
+- **WHEN** the chart contains a CityTaxes account
+- **THEN** its generated row has an empty DATEV account and a comment naming both options (Durchlaufende Posten at 0 %, or revenue at 7 %), and `mapping check --from --to` reports `E-UNMAPPED` for it until the user fills it in
+
+#### Scenario: Food and drinks under 2026 rules
+- **WHEN** the chart contains revenue accounts "Frühstück Speisen" at 7 % and "Getränke" at 19 %
+- **THEN** the food account maps to the 7 % revenue account and the drinks account to the 19 % revenue account
+
+#### Scenario: Templates scale to Sachkontenlänge 5
+- **WHEN** `init-mapping --skr 03` runs with `datev.sachkontenlaenge` 5
+- **THEN** the template's `8300` is written as `83000`, the collective debtor `10000` as `100000`, and the command prints a note naming Sachkontenlänge 5
+
+#### Scenario: Non-cash payment never maps to the bank account
+- **WHEN** the template maps a credit-card payment account
+- **THEN** it maps to the Geldtransit clearing account, not to a bank account
+
+#### Scenario: Real apaleo chart
+- **WHEN** `init-mapping --skr 03` runs on the recorded BER chart of accounts
+- **THEN** the file has no row for `3000` Liabilities, has `*;Liabilities` rows at 7, 19 and 0 % and `*;AccountsReceivable;;;10000`, maps `RevenueNoShow_Reduced:7.00` and `RevenueCancellationFees_Reduced:7.00` to 8300, leaves every 16 % and 5 % revenue row empty with the 2020 comment, and the printed counts list those rows as historical, not as rows to decide
+
+#### Scenario: Austrian chart
+- **WHEN** `init-mapping --skr 03` runs on the recorded VIE chart (rates 4.9, 10, 13 and 20 %)
+- **THEN** the rows for those rates stay empty and the command prints `N-FOREIGN-VAT-RATES` naming 4.9, 10, 13 and 20 %
+
+### Requirement: init-mapping command
+`apaleo-datev init-mapping --property <id> --skr 03|04 [--out <file>] [--update]` SHALL read the property's chart of accounts and write a mapping CSV with one row per leaf account pre-filled from the template plus the template's wildcard rows, SHALL refuse to overwrite an existing file unless `--update` is given, and with `--update` SHALL keep every existing row unchanged, append rows only for accounts and wildcard rows not yet present, and print `N-PARENT-ROW-EMPTY` for each existing empty parent row that the resolver now passes over (for example `3000;Liabilities` from template version 1, which may be deleted) and `N-TEMPLATE-SUGGESTION` for each existing row with an empty DATEV account for which the current template has a suggestion, naming the line, the account and the suggested DATEV account.
+
+#### Scenario: First run
+- **WHEN** the user runs `init-mapping --property BSP --skr 04` and no file exists
+- **THEN** `mapping-BSP.csv` is written with all leaf accounts, template suggestions where a rule matched, and the command prints how many rows are mapped and unmapped
+
+#### Scenario: Update keeps edits
+- **WHEN** the user has edited row `5000` and apaleo has added account `5020`, and runs `init-mapping --property BSP --skr 04 --update`
+- **THEN** row `5000` is unchanged and a row for `5020` is appended, and the command lists the added account
+
+#### Scenario: Update of a version 1 file
+- **WHEN** a file written by template version 1 for the BER chart (empty `3000;Liabilities` row, empty `RevenueNoShow_Reduced:7.00` row, no AccountsReceivable wildcard) is updated with `--update`
+- **THEN** every existing row is byte-identical, `*;AccountsReceivable;;;10000` is appended, and the command prints `N-PARENT-ROW-EMPTY` for the `3000` row and `N-TEMPLATE-SUGGESTION` for `RevenueNoShow_Reduced:7.00` and `RevenueCancellationFees_Reduced:7.00` with 8300
+
+#### Scenario: Grman backup already exists
+- **WHEN** the file is a Grman export and `<name>.grman.csv` already exists
+- **THEN** `init-mapping --update` exits with code 1 and changes neither file
+
+#### Scenario: Existing file without update
+- **WHEN** `mapping-BSP.csv` exists and the user runs `init-mapping` without `--update`
+- **THEN** the command exits with code 1 and nothing is written
