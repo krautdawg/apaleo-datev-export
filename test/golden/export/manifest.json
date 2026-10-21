@@ -3,13 +3,14 @@
     {
       "file": "EXTF_Buchungsstapel_1234567_42_20260901-20260930_BSP.csv",
       "status": "current",
-      "sha256": "507f5fd4962e6f768e30dfb36c45001b8279fdb367655ecee5bdd9a666f1e81f",
-      "bodySha256": "f73aadf4a2fdf115b11c970789505891a674acabcaa0fb6243a1b8757168117c",
+      "sha256": "b1ddeef27da85b3fa9fe771aa51cbc53ae4d59c7c48d9c5e341b9ac96fa58b56",
+      "bodySha256": "2e538f4b25ece816191d82f8d39385a950e6f115d1c2c3c008887bddcb26fde5",
       "from": "2026-09-01",
       "to": "2026-09-30",
       "bookings": 22,
-      "sollTotal": "1427.60",
-      "habenTotal": "360.00",
+      "amountTotal": "1787.60",
+      "sollTotal": "1787.60",
+      "habenTotal": "1787.60",
       "mappingSha256": "57ab11708d32823807fe2b973c57b2af3ebe62abee8bd1d852eba4e0327df384",
       "toolVersion": "0.1.0",
       "createdAt": "2026-10-20T08:00:00.000Z"

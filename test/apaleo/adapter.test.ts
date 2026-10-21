@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { LocalDate } from '../../src/core/date.js';
-import { ApaleoPermissionError, PROPERTY_PAGE_SIZE } from '../../src/sources/apaleo/index.js';
+import { ApaleoError, ApaleoPermissionError, PROPERTY_PAGE_SIZE } from '../../src/sources/apaleo/index.js';
 import {
   API,
   BSP,
@@ -12,6 +12,7 @@ import {
   noContent,
   readFixture,
 } from '../helpers/apaleo.js';
+import { tax } from '../helpers/ledger.js';
 
 const EXPORT = `${API}/finance/v1/accounts/export-gross-daily`;
 const AGGREGATE = `${API}/finance/v1/accounts/aggregate-daily`;
@@ -57,10 +58,10 @@ describe('getChartOfAccounts', () => {
     const accounts = await source.getChartOfAccounts(BSP);
     const pick = (number: string) => accounts.find((a) => a.number === number && a.ledger === 'global');
     expect(pick('5000')).toEqual({ number: '5000', name: 'Revenues', type: 'Revenues', ledger: 'global', isArchived: false, hasChildren: true });
-    expect(pick('5010')).toMatchObject({ name: 'Accommodation', parentNumber: '5000', hasChildren: true });
-    expect(pick('5010')?.vat).toBeUndefined();
-    expect(pick('5011')).toMatchObject({ parentNumber: '5010', vat: { type: 'Reduced', percent: 7 }, hasChildren: false });
-    expect(pick('5019')).toMatchObject({ parentNumber: '5010', vat: { type: 'Normal', percent: 19 } });
+    expect(pick('RevenueAccommodation')).toMatchObject({ name: 'Accommodation', parentNumber: '5000', hasChildren: true });
+    expect(pick('RevenueAccommodation')?.vat).toBeUndefined();
+    expect(pick('5011')).toMatchObject({ parentNumber: 'RevenueAccommodation', vat: { type: 'Reduced', percent: 7 }, hasChildren: false });
+    expect(pick('5019')).toMatchObject({ parentNumber: 'RevenueAccommodation', vat: { type: 'Normal', percent: 19 } });
     expect(pick('5111')).toMatchObject({ parentNumber: '5110', vat: { type: 'Reduced', percent: 7 } });
     expect(pick('5990')).toMatchObject({ isArchived: true, vat: { type: 'Without', percent: 0 } });
   });
@@ -131,8 +132,9 @@ describe('getLedger', () => {
       command: 'PostPrepayment',
       currency: 'EUR',
       grossCents: 20000,
+      netPrecise: '186.92',
       netCents: 18692,
-      taxes: [{ vatType: 'Reduced', percent: 7, amountCents: 1308 }],
+      taxes: [tax('Reduced', 7, 1308)],
       receipt: { type: 'PspReference', number: 'PSP-8823410001' },
       reference: 'BSP-GHIJKL-1',
       referenceType: 'Guest',
@@ -147,7 +149,7 @@ describe('getLedger', () => {
     const allowance = lines.find((l) => l.sourceEntryNumber === 'BSPE0010');
     expect(allowance).toMatchObject({ grossCents: -1000, netCents: -935, taxes: [{ amountCents: -65 }] });
     const cityTax = lines.find((l) => l.sourceEntryNumber === 'BSPE0004');
-    expect(cityTax?.taxes).toEqual([{ vatType: 'Without', percent: 0, amountCents: 0 }]);
+    expect(cityTax?.taxes).toEqual([tax('Without', 0, 0, '0')]);
     expect(cityTax?.debit).toEqual({
       number: 'BSP-ABCDEF-1_Receivables',
       name: 'Receivables for Reservation BSP-ABCDEF-1',
@@ -295,7 +297,7 @@ describe('response validation', () => {
 
   it('accepts taxes: null and a receipt without type', async () => {
     const data = dayFixture('2026-09-14');
-    Object.assign(data.transactions[0] as object, { taxes: null, receipt: { number: 'R-1' } });
+    Object.assign(data.transactions[0] as object, { netAmount: 200, taxes: null, receipt: { number: 'R-1' } });
     const [line] = await withDay(data).getLedger(BSP, '2026-09-14', '2026-09-15');
     expect(line).toMatchObject({ taxes: [], receipt: { number: 'R-1' } });
     expect(line?.receipt).not.toHaveProperty('type');
@@ -306,6 +308,29 @@ describe('response validation', () => {
     Object.assign(data.transactions[1] as object, { grossAmount: 10.005 });
     await expect(withDay(data).getLedger(BSP, '2026-09-14', '2026-09-15')).rejects.toThrow(
       'apaleo property BSP, business day 2026-09-14, source entry BSPE0002, grossAmount: the amount 10.005 is not a whole number of cents.',
+    );
+  });
+
+  it('keeps eight-decimal net and tax amounts precise and rounds the cent fields half away from zero', async () => {
+    const data = dayFixture('2026-09-14');
+    // Line 000000032 of the recorded BER day 2026-10-21: drinks at 19 %.
+    Object.assign(data.transactions[0] as object, {
+      grossAmount: 14.9,
+      netAmount: 12.5210084,
+      taxes: [{ type: 'Normal', percent: 19, amount: 2.3789916 }],
+    });
+    const [line] = await withDay(data).getLedger(BSP, '2026-09-14', '2026-09-15');
+    expect(line).toMatchObject({ grossCents: 1490, netPrecise: '12.5210084', netCents: 1252 });
+    expect(line?.taxes).toEqual([{ vatType: 'Normal', percent: 19, amountPrecise: '2.3789916', amountCents: 238 }]);
+  });
+
+  it('fails when gross is not net plus the taxes, naming the day, the entry and the three amounts', async () => {
+    const data = dayFixture('2026-09-14');
+    Object.assign(data.transactions[1] as object, { grossAmount: 10, netAmount: 9, taxes: [{ type: 'Reduced', percent: 7, amount: 0.65 }] });
+    const error = await withDay(data).getLedger(BSP, '2026-09-14', '2026-09-15').catch((e: unknown) => e);
+    expect(error).toBeInstanceOf(ApaleoError);
+    expect((error as Error).message).toMatch(
+      /^apaleo property BSP, business day 2026-09-14, source entry BSPE0002: gross 10 is not net 9 plus the taxes 0\.65 \(difference 0\.35\)\./,
     );
   });
 });
@@ -378,7 +403,7 @@ describe('HTTP errors', () => {
 });
 
 describe('getAccountTotals', () => {
-  it('sends one request per business day and returns main accounts with a grand total', async () => {
+  it('sends one request per business day and returns the accounts with a grand total', async () => {
     const { source, ctx } = createFixtureSource();
     const days: LocalDate[] = ['2026-09-14', '2026-09-15', '2026-09-16'];
     const results = await Promise.all(days.map((day) => source.getAccountTotals(BSP, day)));
@@ -390,12 +415,23 @@ describe('getAccountTotals', () => {
       expect(totals.accounts.length).toBeGreaterThan(0);
       expect(totals.total.debited.value).toBe(totals.total.credited.value);
     }
-    expect(results[0]?.accounts.find((a) => a.account.number === '5000')).toEqual({
-      account: { number: '5000', name: 'Revenues', type: 'Revenues' },
+    expect(results[0]?.accounts.find((a) => a.account.number === '5011')).toEqual({
+      account: { number: '5011', name: 'Accommodation 7%', type: 'Revenues' },
       debited: { value: '0', currency: 'EUR' },
-      credited: { value: '138.8004', currency: 'EUR' },
-      balance: { value: '-138.8004', currency: 'EUR' },
+      credited: { value: '93.46', currency: 'EUR' },
+      balance: { value: '-93.46', currency: 'EUR' },
     });
+  });
+
+  it('reads the recorded BER aggregates of 2026-10-21: leaf global accounts and guest parents, precise amounts', async () => {
+    const { source } = createFixtureSource({ live: true });
+    const totals = await source.getAccountTotals('BER', '2026-10-21');
+    expect(totals.accounts).toHaveLength(18);
+    const balance = (number: string) => totals.accounts.find((a) => a.account.number === number)?.balance.value;
+    expect(balance('1107')).toBe('114.9');
+    expect(balance('RevenueAccommodation_Reduced:7.00')).toBe('-398.14953271');
+    expect(balance('Vat_Reduced:7.00')).toBe('-37.36953271');
+    expect(balance('3000')).toBe('-220.54692532');
   });
 
   it('keeps a precise amount of 123.4567 without a sub-cent error', async () => {

@@ -14,6 +14,8 @@ apaleo-datev mapping check --property BSP --from 2026-09-01 --to 2026-09-30   # 
 apaleo-datev init-mapping --property BSP --skr 04 --update   # später: neue apaleo-Konten anhängen, bearbeitete Zeilen bleiben
 ```
 
+`init-mapping` zählt am Ende die Zeilen: zugeordnet, nicht zugeordnet (die musst du entscheiden), historische Zeilen zu 16 % und 5 % (bleiben absichtlich leer, siehe unten) und Zeilen für die USt-Konten von apaleo (brauchen kein DATEV-Konto).
+
 Der Pfad der Datei kann in der Konfiguration stehen (`properties[].mapping`), sonst heißt sie `mapping-<id>.csv` im Arbeitsverzeichnis. `mapping check --from --to` liest das Buchungsjournal des Zeitraums aus apaleo und meldet jedes gebuchte Konto ohne Zuordnung; die Kanzlei kann die Datei also an einem echten Monat prüfen, bevor ein Export läuft.
 
 ## Spalten
@@ -41,11 +43,21 @@ Für jedes gebuchte apaleo-Konto sucht das Tool in dieser Reihenfolge:
 
 1. genau diese Nummer und dieser Typ;
 2. diese Nummer mit beliebigem Typ (Zeilen aus einem Grman-Export);
-3. das Elternkonto (und dessen Eltern) mit gleichem Typ;
+3. das Elternkonto (und dessen Eltern) mit gleichem Typ; eine Elternzeile **ohne** DATEV-Konto beendet die Suche nicht, das Tool geht weiter zu den `*`-Zeilen;
 4. für Typen mit USt eine `*`-Zeile mit dem USt-Satz der Buchung;
 5. für andere Typen eine `*`-Zeile des Typs.
 
+Eine Zeile genau für das Konto (Schritt 1 oder 2) mit leerem `datev_account` heißt dagegen weiter „nicht zugeordnet“: Du hast das Konto bewusst aufgeführt. Findet das Tool gar kein DATEV-Konto, nennt die Meldung `E-UNMAPPED` die leere Elternzeile und die `*`-Zeile, die du ergänzen kannst, zum Beispiel `*;Liabilities;;7;<DATEV-Konto>;;7` (Vorlage: 1711). Konten pro Reservierung oder Folio meldet sie einmal pro Elternkonto, Typ und Satz, mit bis zu drei Beispielen.
+
+Bis Version 0.1.0 schrieb die Vorlage eine leere Zeile `3000;Liabilities`, die alle Anzahlungen blockierte. Sie blockiert seit 0.1.1 nicht mehr; du kannst sie löschen (`init-mapping --update` meldet sie als `N-PARENT-ROW-EMPTY`).
+
 Erlöskonten (Revenues) werden nie per `*` zugeordnet: Ein neues Erlöskonto (Spa, Parken) ordnet ein Mensch zu.
+
+### Konten pro Reservierung und `/Offset`-Konten
+
+apaleo bucht auf Konten pro Reservierung oder Folio, zum Beispiel `EPEBVUIU-1_Liabilities/Reduced:7.00` (Anzahlung zu 7 %), `ZAQSEFYC-1_Receivables` (Gastforderung) oder `ZAQSEFYC-1_AccountsReceivable` (Debitor). Sie stehen nicht im Kontenplan, haben aber ein Elternkonto (`3000`, `1200`, `9999`). Du brauchst keine Zeile für jedes davon: Gastforderungen laufen über die Zeile für `1200`, Anzahlungen über die `*`-Zeilen pro USt-Satz, Debitoren über `*;AccountsReceivable;;;10000` auf den Sammeldebitor.
+
+Jede Zahlung und jede Umbuchung auf den Debitor hat in apaleo eine zweite Zeile auf ein `/Offset`-Konto, zum Beispiel `<Folio>_Receivables → <Folio>_Receivables/Offset` mit dem negativen Betrag. Das `/Offset`-Konto hat dasselbe Elternkonto, landet also auf demselben DATEV-Konto; das Tool überspringt diese Zeile als `SAME_ACCOUNT` (im Protokoll unter „Skipped lines“).
 
 ## Die USt-Prüfung: DATEV-Satz gleich apaleo-Satz
 
@@ -85,14 +97,15 @@ Wird eine Anzahlung verrechnet, ohne dass apaleo dabei einen USt-Betrag mitschic
 - **Bar**: Kasse (SKR03 1000 / SKR04 1600).
 - **Karte, Überweisung und andere unbare Zahlungen**: Geldtransit (SKR03 1360 / SKR04 1460), nie direkt das Bankkonto. Die Kanzlei bucht den Kontoauszug oder die Abrechnung des Zahlungsdienstleisters gegen das Geldtransitkonto. Gebühren der Zahlungsdienstleister bucht dieses Tool nicht.
 - **Gast-, externe und Buchungsfolios (Receivables)**: Forderungen aus LuL ohne Kontokorrent (SKR03 1410 / SKR04 1210) als Verrechnungskonto. Folios mit Gästenamen erscheinen nie mit Namen im Buchungstext.
-- **Rechnungen an Firmen (AccountsReceivable, City Ledger)**: ein Sammeldebitor, 10000. Lege ihn im Mandanten an. Einzelne Debitoren pro Firma (mit Stammdaten) erzeugt das Tool nicht.
+- **Rechnungen an Firmen (AccountsReceivable, City Ledger)**: ein Sammeldebitor, 10000. Lege ihn im Mandanten an. Die Vorlage schreibt dafür die Zeile `*;AccountsReceivable;;;10000`, damit auch die Debitorenkonten pro Reservierung und ihre `/Offset`-Konten dort landen. Einzelne Debitoren pro Firma (mit Stammdaten) erzeugt das Tool nicht.
 
 ## Vorlagen SKR03 und SKR04
 
-Die Vorlagen stehen in `templates/skr03-hotel.rules.csv` und `templates/skr04-hotel.rules.csv` (Version `skr03-hotel@1`, `skr04-hotel@1`). Jedes Konto wurde am 2026-10-20 gegen die DATEV-Kontenrahmen „Gültig für 2026“ geprüft: SKR 03 Art.-Nr. 11174 und SKR 04 Art.-Nr. 11175, Stand 2026-01-01. Das DATEV-Hilfe-Center (Dok.-Nr. 0907817) ließ sich nicht automatisch abrufen; geprüft wurde deshalb gegen die unveränderten DATEV-PDFs, die unter https://www.collmex.de/skr03.pdf und https://www.collmex.de/skr04.pdf veröffentlicht sind. Jede Vorlagenzeile mit Konto nennt diese Quelle im Kommentar.
+Die Vorlagen stehen in `templates/skr03-hotel.rules.csv` und `templates/skr04-hotel.rules.csv` (Version `skr03-hotel@2`, `skr04-hotel@2`, seit 0.1.1). Jedes Konto wurde am 2026-10-20 gegen die DATEV-Kontenrahmen „Gültig für 2026“ geprüft: SKR 03 Art.-Nr. 11174 und SKR 04 Art.-Nr. 11175, Stand 2026-01-01. Das DATEV-Hilfe-Center (Dok.-Nr. 0907817) ließ sich nicht automatisch abrufen; geprüft wurde deshalb gegen die unveränderten DATEV-PDFs, die unter https://www.collmex.de/skr03.pdf und https://www.collmex.de/skr04.pdf veröffentlicht sind. Jede Vorlagenzeile mit Konto nennt diese Quelle im Kommentar.
 
 | Fall | SKR03 | SKR04 |
 |---|---|---|
+| No-Show- und Stornoerlöse, die apaleo mit 7 % bucht | 8300 Erlöse 7 % USt (AM) | 4300 |
 | Logis 7 % | 8300 Erlöse 7 % USt (AM) | 4300 |
 | Speisen 7 % (ab 2026-01-01) | 8300 | 4300 |
 | Getränke und sonstige Erlöse 19 % | 8400 Erlöse 19 % USt (AM) | 4400 |
@@ -100,14 +113,17 @@ Die Vorlagen stehen in `templates/skr03-hotel.rules.csv` und `templates/skr04-ho
 | Barzahlung | 1000 Kasse | 1600 |
 | Karte, Überweisung, andere unbare Zahlungen | 1360 Geldtransit | 1460 |
 | Gast-, externe und Buchungsfolios (Receivables) | 1410 Forderungen aus LuL ohne Kontokorrent | 1210 |
-| Rechnungen an Firmen (AccountsReceivable) | 10000 Sammeldebitor | 10000 |
+| Rechnungen an Firmen (AccountsReceivable), auch per `*` | 10000 Sammeldebitor | 10000 |
 | Anzahlungen 7 % / 19 % | 1711 / 1718 erhaltene, versteuerte Anzahlungen (AM) | 3260 / 3272 |
 | Anzahlungen ohne USt | 1719 Erhaltene Anzahlungen | 3280 |
-| Forderungsverluste 7 % / 19 % | 2401 / 2406 (AM) | 6931 / 6936 |
+| Forderungsverluste 7 % / 19 %, auch per `*` | 2401 / 2406 (AM) | 6931 / 6936 |
+| Erlöse und Anzahlungen zu 16 % / 5 % (2020) | leer | leer |
+
+Für ein Containerkonto außerhalb der globalen Konten, das nur per `*` sinnvoll zugeordnet wird (`3000` Liabilities, `CollectiveDebitor_LossOfAccountsReceivable`), schreibt die Vorlage keine Zeile mehr: Die `*`-Zeilen decken seine Konten pro Reservierung ab, und ein einziges DATEV-Konto könnte nicht jeden Satz abdecken.
 
 ### Zeilen mit „Vorschlag (ungeprüft)“
 
-In Version 1 der Vorlagen ist keine Zeile mit `Vorschlag (ungeprüft)` markiert: Jedes vorgeschlagene Konto wurde gegen die Quelle oben geprüft. Ein Test hält diese Liste aktuell; kommt in einer späteren Version eine ungeprüfte Zeile dazu, steht sie hier.
+In Version 2 der Vorlagen ist keine Zeile mit `Vorschlag (ungeprüft)` markiert: Jedes vorgeschlagene Konto wurde gegen die Quelle oben geprüft. Ein Test hält diese Liste aktuell; kommt in einer späteren Version eine ungeprüfte Zeile dazu, steht sie hier.
 
 ### Was die Kanzlei entscheiden muss
 
@@ -116,9 +132,22 @@ Diese Vorlagenzeilen lassen das DATEV-Konto leer oder verlangen eine Entscheidun
 - **Kurtaxe, Beherbergungsteuer, Gästeabgaben** (CityTaxes, SecondCityTax, GuestLevies): bleiben leer, siehe oben.
 - **Speisen**: Logis und Speisen landen in der Vorlage beide auf 8300 / 4300. Ein eigenes 7-%-Erlöskonto für Speisen hält sie getrennt.
 - **Erlöse zu 7 % ohne erkennbaren Namen** bleiben leer („Logis oder Speisen?“).
+- **No-Show- und Stornoerlöse zu 7 %**: Die Vorlage schlägt 8300 / 4300 vor, weil apaleo sie mit 7 % bucht (als Teil der Übernachtung) und das DATEV-Konto den Satz von apaleo anwenden muss. Ob die Gebühr überhaupt steuerbar ist oder Schadenersatz, entscheidet die Kanzlei; dann gehört auch die USt-Einstellung in apaleo geändert.
 - **Stornogebühren** und andere Erlöse ohne USt: steuerbar oder Schadenersatz?
+- **Historische Sätze 16 % und 5 %** (1. Juli bis 31. Dezember 2020): apaleo legt diese Erlös- und Anzahlungskonten in jedem Kontenplan an. Die Vorlage lässt sie absichtlich leer: Bucht apaleo darauf, stoppt der Export mit `E-UNMAPPED`, was für Leistungen nach 2020 richtig ist. Exporte für 2020 klärst du mit der Kanzlei.
 - **Hauskonten (House)** und **Durchlaufende Posten aus apaleo (TransitoryItems)** haben keine Vorlage.
 - **Vat, VatOnLiabilities**: brauchen kein Konto; diese Buchungen werden übersprungen.
+
+### Hotels in Österreich
+
+Die Vorlagen und die Automatikkonten von DATEV kennen nur die deutschen Sätze (7 %, 19 % und 2020 16 % / 5 %). Hat der Kontenplan andere Sätze, etwa 10 %, 13 % und 20 % in Österreich, meldet `init-mapping` `N-FOREIGN-VAT-RATES` und lässt diese Zeilen leer; ein Export mit Buchungen darauf stoppt mit `E-UNMAPPED`. Für ein österreichisches Hotel ist dieser DATEV-Export nicht gedacht; es braucht ein österreichisches Ziel wie BMD.
+
+### Eine ältere Datei aktualisieren
+
+`init-mapping --update` ändert keine bestehende Zeile und keinen Kommentar am Anfang der Datei. Es hängt Zeilen für neue apaleo-Konten und neue `*`-Zeilen der Vorlage an (seit Version 2 zum Beispiel `*;AccountsReceivable;;;10000`) und meldet, was du prüfen solltest:
+
+- `N-PARENT-ROW-EMPTY`: eine leere Zeile für ein Elternkonto, etwa `3000;Liabilities` aus Version 1. Sie blockiert nichts mehr; du kannst sie löschen.
+- `N-TEMPLATE-SUGGESTION`: eine Zeile mit leerem DATEV-Konto, für die die Vorlage jetzt einen Vorschlag hat, etwa No-Show- und Stornoerlöse zu 7 % auf 8300. Trag ihn ein, wenn die Kanzlei zustimmt.
 
 ## Umstieg von einem anderen DATEV-Connector
 

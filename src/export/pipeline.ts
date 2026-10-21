@@ -10,7 +10,7 @@ import { formatCents } from '../core/money.js';
 import type { LedgerLine, SourceAdapter, SourceProperty } from '../core/source.js';
 import { ExtfValidationError, buchungsstapelFileName, encodeCp1252, renderBuchungsstapel, type ExtfHeader } from '../datev/index.js';
 import { checkCoverage, loadMapping, type Mapping, type Skr } from '../mapping/index.js';
-import { buildBookings, releaseRateOf, type PostedBooking, type PostingOptions, type PostingResult } from '../posting/index.js';
+import { buildBookings, releaseRateOf, type PostingOptions, type PostingResult } from '../posting/index.js';
 import { checkAggregates, plausibilityFindings } from './checks.js';
 import { monthFolder, planOutput, repairCompanions, sha256, writeOutput, type OutputPlan, type WrittenFile } from './output.js';
 import { dayRuleFindings, finalFrom, lastFinalDay, splitPeriod, type DateRange, type PeriodPart } from './period.js';
@@ -216,7 +216,7 @@ async function exportPart(part: PeriodPart, inputs: PropertyInputs, request: Exp
     if (plan.action === 'refuse') findings.push(plan.finding);
     if (hasError(findings)) return outcome('failed', { path });
     if (request.dryRun) return outcome('checked', { path, plan: plan.action });
-    const totals = sideTotals(result.bookings);
+    const amountTotal = formatCents(result.bookings.reduce((sum, booking) => sum + booking.amountCents, 0));
     const companions = (status: PartStatus, fileBytes: Uint8Array): WrittenFile => ({
       path,
       bytes: fileBytes,
@@ -225,8 +225,9 @@ async function exportPart(part: PeriodPart, inputs: PropertyInputs, request: Exp
         from: part.from,
         to: part.to,
         bookings: result?.bookings.length ?? 0,
-        sollTotal: formatCents(totals.soll),
-        habenTotal: formatCents(totals.haben),
+        amountTotal,
+        sollTotal: amountTotal,
+        habenTotal: amountTotal,
         mappingSha256,
         toolVersion: VERSION,
         createdAt: deps.ctx.now().toISOString(),
@@ -377,11 +378,6 @@ function extfHeader(part: PeriodPart, inputs: PropertyInputs, skr: Skr, { loaded
     bezeichnung: `${demo ? 'DEMO ' : ''}apaleo ${inputs.id} ${part.month}`.slice(0, 30),
     erzeugtAm: ctx.now(),
   };
-}
-
-function sideTotals(bookings: readonly PostedBooking[]): { soll: number; haben: number } {
-  const sum = (side: 'S' | 'H') => bookings.filter((b) => b.side === side).reduce((total, b) => total + b.amountCents, 0);
-  return { soll: sum('S'), haben: sum('H') };
 }
 
 /** Appended to the property id in the name of a demo file, so a demo file never looks like a real export in a file list. */

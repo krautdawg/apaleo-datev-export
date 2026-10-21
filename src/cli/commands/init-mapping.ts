@@ -3,6 +3,7 @@ import { formatFinding } from '../../core/findings.js';
 import {
   VAT_ACCOUNT_TYPES,
   appendRows,
+  isHistoricalRow,
   convertGrmanRows,
   loadTemplate,
   mappingHeaderComment,
@@ -10,6 +11,7 @@ import {
   parseMapping,
   renderMappingFile,
   suggestRows,
+  updateNotes,
   type MappingRowValues,
 } from '../../mapping/index.js';
 import { CONFIG_OPTION, EXIT_OK, stringOption, type Command } from '../command.js';
@@ -91,21 +93,25 @@ export const initMapping: Command = {
     const added = newRows(mapping.rows, suggestion.rows);
     if (added.length === 0) {
       ctx.stdout.write(`No new apaleo accounts: ${path} is unchanged.\n`);
-      return EXIT_OK;
+    } else {
+      await writeFileAtomic(ctx, path, appendRows(existing, added));
+      ctx.stdout.write(`Updated ${path}: existing rows unchanged.\n`);
+      printAdded(ctx, added);
     }
-    await writeFileAtomic(ctx, path, appendRows(existing, added));
-    ctx.stdout.write(`Updated ${path}: existing rows unchanged.\n`);
-    printAdded(ctx, added);
+    for (const note of updateNotes(mapping.rows, accounts, suggestion.rows)) ctx.stdout.write(`${formatFinding(note)}\n`);
     return EXIT_OK;
   },
 };
 
+/** Mapped and unmapped rows; historical (2020-rate) rows and VAT account rows are counted apart, as they need no decision. */
 function printCounts(ctx: CommandContext, rows: readonly MappingRowValues[]): void {
-  const needed = rows.filter((row) => !VAT_ACCOUNT_TYPES.has(row.apaleoType));
-  const mapped = needed.filter((row) => row.datevAccount !== '').length;
-  const vatRows = rows.length - needed.length;
+  const historical = rows.filter(isHistoricalRow).length;
+  const vatRows = rows.filter((row) => VAT_ACCOUNT_TYPES.has(row.apaleoType)).length;
+  const mapped = rows.filter((row) => row.datevAccount !== '').length;
+  const unmapped = rows.length - mapped - historical - vatRows;
   ctx.stdout.write(
-    `${rows.length} rows: ${mapped} mapped, ${needed.length - mapped} unmapped` +
+    `${rows.length} rows: ${mapped} mapped, ${unmapped} unmapped` +
+      (historical > 0 ? `, ${historical} historical row(s) at the 2020 rates 16 % and 5 %, left empty on purpose` : '') +
       (vatRows > 0 ? `, ${vatRows} VAT account row(s) that need no DATEV account` : '') +
       '.\n',
   );

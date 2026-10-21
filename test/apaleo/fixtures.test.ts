@@ -7,11 +7,11 @@ import { validateSwagger, type SwaggerSchema } from '../helpers/swagger.js';
 const excerpt = readFixture('swagger-excerpt.json') as { definitions: Record<string, SwaggerSchema> };
 const definitions = excerpt.definitions;
 
-/** Which Swagger model each fixture folder or file holds. Every fixture must be listed. */
+/** Which Swagger model each fixture folder or file holds, for Hotel Beispiel and the live recordings (`live/<property>/`). Every fixture must be listed. */
 const MODELS: [RegExp, string][] = [
-  [/^export-gross-daily\/\d{4}-\d{2}-\d{2}\.json$/, 'ExportGrossTransactionListModel'],
-  [/^aggregate-daily\/\d{4}-\d{2}-\d{2}\.json$/, 'AggregateTransactionListModel'],
-  [/^accounts-schema\.json$/, 'ChartOfAccountsModel'],
+  [/^(live\/[A-Z]+\/)?export-gross-daily\/\d{4}-\d{2}-\d{2}\.json$/, 'ExportGrossTransactionListModel'],
+  [/^(live\/[A-Z]+\/)?aggregate-daily\/\d{4}-\d{2}-\d{2}\.json$/, 'AggregateTransactionListModel'],
+  [/^(live\/[A-Z]+\/)?accounts-schema\.json$/, 'ChartOfAccountsModel'],
   [/^properties\/page-\d+\.json$/, 'PropertyListModel'],
 ];
 
@@ -24,6 +24,7 @@ describe('apaleo fixtures conform to the Swagger excerpt', () => {
     const unknown = fixtures.filter((file) => !MODELS.some(([pattern]) => pattern.test(file)));
     expect(unknown).toEqual([]);
     expect(fixtures.length).toBeGreaterThanOrEqual(12);
+    expect(fixtures.filter((file) => file.startsWith('live/'))).toHaveLength(10);
   });
 
   it.each(fixtures)('%s', (file) => {

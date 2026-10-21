@@ -90,7 +90,7 @@ properties:
 
 | Schlüssel | Standard | Bedeutung |
 |---|---|---|
-| `checks.aggregates` | `false` | Vergleicht das Buchungsjournal zusätzlich mit den Tagessummen von apaleo pro Hauptkonto und warnt bei Abweichungen (`W-AGGREGATE-DIFF`). Braucht die optionale Berechtigung `core.subledger_aggregate.create` und eine zusätzliche Anfrage pro Tag. |
+| `checks.aggregates` | `false` | Vergleicht das Buchungsjournal zusätzlich mit den Tagessummen von apaleo, Saldo pro Konto, und warnt bei Abweichungen (`W-AGGREGATE-DIFF`, siehe [export.md](export.md)). Braucht die optionale Berechtigung `core.subledger_aggregate.create` und eine zusätzliche Anfrage pro Tag. |
 
 ### `schedule`
 

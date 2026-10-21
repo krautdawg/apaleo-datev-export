@@ -14,7 +14,7 @@ import {
 import { releaseRateOf } from '../../src/posting/index.js';
 import { BSP, loadBeispielData } from '../helpers/apaleo.js';
 import { FakeSource } from '../helpers/fake-source.js';
-import { ledgerLine } from '../helpers/ledger.js';
+import { ledgerLine, tax } from '../helpers/ledger.js';
 import { mappingOf, mappingRow } from '../helpers/mapping.js';
 
 const check = (rows: MappingRowValues[], sachkontenlaenge = 4, skr: '03' | '04' = '03') =>
@@ -254,8 +254,8 @@ describe('checkCoverage', () => {
     const liabilities = { number: 'BSP-X-1_Liabilities', name: 'Liabilities', type: 'Liabilities' };
     const receivables = { number: 'BSP-X-1_Receivables', name: 'R', type: 'Receivables' };
     const release = ledgerLine({ debit: liabilities, credit: receivables, taxes: [], reference: 'BSP-X-1' });
-    const without = ledgerLine({ debit: liabilities, credit: receivables, taxes: [{ vatType: 'Without', percent: 0, amountCents: 0 }] });
-    const taxed = ledgerLine({ debit: liabilities, credit: receivables, taxes: [{ vatType: 'Reduced', percent: 7, amountCents: 654 }] });
+    const without = ledgerLine({ debit: liabilities, credit: receivables, taxes: [tax('Without', 0, 0)] });
+    const taxed = ledgerLine({ debit: liabilities, credit: receivables, taxes: [tax('Reduced', 7, 654)] });
     const untaxedRevenue = ledgerLine({ credit: { number: '5990', name: 'No VAT', type: 'Revenues' }, taxes: [] });
     const rateOf = releaseRateOf([release, without, taxed, untaxedRevenue], undefined);
     expect([release, without, taxed, untaxedRevenue].map(rateOf)).toEqual([undefined, undefined, 7, 0]);
@@ -265,7 +265,7 @@ describe('checkCoverage', () => {
       credit: liabilities,
       command: 'PostPrepaymentVat',
       grossCents: 654,
-      taxes: [{ vatType: 'Reduced', percent: 7, amountCents: 654 }],
+      taxes: [tax('Reduced', 7, 654)],
       reference: 'BSP-X-1',
     });
     expect(releaseRateOf([release, pair], undefined)(release)).toBe(7);
@@ -341,7 +341,7 @@ describe('checkCoverage', () => {
         credit: liabilities,
         command: 'PostPrepaymentVat',
         grossCents: 1900,
-        taxes: [{ vatType: 'Normal', percent: 19, amountCents: 1900 }],
+        taxes: [tax('Normal', 19, 1900)],
         reference: 'BSP-X-1',
       },
     ]);
@@ -355,6 +355,82 @@ describe('checkCoverage', () => {
     expect(finding?.message).toContain('or a wildcard row (*) for Liabilities at 19 %');
   });
 
+  describe('accounts of reservations and folios (outside the chart, with a parent)', () => {
+    const chart = new ChartIndex([
+      { number: '3000', name: 'Liabilities', type: 'Liabilities', ledger: 'guest', isArchived: false, hasChildren: true },
+      { number: '9999', name: 'Accounts Receivable', type: 'AccountsReceivable', ledger: 'guest', isArchived: false, hasChildren: true },
+    ]);
+    const receivables = { number: 'R-1_Receivables', name: 'Receivables for Reservation R-1', type: 'Receivables', parentNumber: '1200' };
+    const deposit = (id: string) => ({ number: `${id}_Liabilities/Reduced:7.00`, name: `Liabilities for Reservation ${id} (7%)`, type: 'Liabilities', parentNumber: '3000' });
+    const base = [mappingRow({ apaleoAccount: '*', apaleoType: 'Receivables', datevAccount: '1410' }), mappingRow({ apaleoAccount: '*', apaleoType: 'Payments', datevAccount: '1360' })];
+
+    it('reports five deposits under the empty 3000 row once, with three examples and the wildcard row to add', () => {
+      const mapping = mappingOf([...base, mappingRow({ apaleoAccount: '3000', apaleoType: 'Liabilities', apaleoName: 'Liabilities' })]);
+      const ledger = ['A-1', 'B-1', 'C-1', 'D-1', 'E-1'].map((id) => ledgerLine({ debit: receivables, credit: deposit(id), command: 'PostCharge', grossCents: -1000, taxes: [tax('Reduced', 7, -65)] }));
+      const findings = coverage(mapping, ledger, chart, { skr: '03' });
+      expect(findings).toHaveLength(1);
+      expect(findings[0]).toMatchObject({ code: 'E-UNMAPPED', value: '3000' });
+      expect(findings[0]?.message).toBe(
+        '5 Liabilities accounts of reservations or folios under parent 3000 at 7 % (A-1_Liabilities/Reduced:7.00, B-1_Liabilities/Reduced:7.00, ' +
+          'C-1_Liabilities/Reduced:7.00 and 2 more) are not mapped (5 lines, gross -50.00): the parent row for 3000 on line 4 has no DATEV account ' +
+          'and does not apply to Liabilities at different VAT rates; add a wildcard row `*;Liabilities;;7;<DATEV account>;;7` (template: 1711)',
+      );
+      expect(findings[0]?.message).not.toContain('fill in');
+    });
+
+    it('names the empty 2020 wildcard row of a v1 mapping after --update instead of asking to add it', () => {
+      const mapping = mappingOf([
+        ...base,
+        mappingRow({ apaleoAccount: '3000', apaleoType: 'Liabilities', apaleoName: 'Liabilities' }),
+        mappingRow({ apaleoAccount: '*', apaleoType: 'Liabilities', apaleoVatPercent: '16' }),
+      ]);
+      const ledger = [ledgerLine({ debit: receivables, credit: { ...deposit('A-1'), number: 'A-1_Liabilities/Normal:16.00' }, grossCents: -1160, taxes: [tax('Normal', 16, -160)] })];
+      const [finding, ...rest] = coverage(mapping, ledger, chart, { skr: '03' });
+      expect(rest).toEqual([]);
+      expect(finding?.message).toContain(
+        'the parent row for 3000 on line 4 has no DATEV account and does not apply to Liabilities at different VAT rates; ' +
+          'the wildcard row for Liabilities at 16 % on line 5 is empty on purpose: 16 % applied only from 1 July to 31 December 2020',
+      );
+      expect(finding?.message).not.toContain('add a wildcard row');
+    });
+
+    it('asks to fill in an empty wildcard row at a current rate that the empty parent row hides', () => {
+      const mapping = mappingOf([
+        ...base,
+        mappingRow({ apaleoAccount: '3000', apaleoType: 'Liabilities', apaleoName: 'Liabilities' }),
+        mappingRow({ apaleoAccount: '*', apaleoType: 'Liabilities', apaleoVatPercent: '7' }),
+      ]);
+      const ledger = [ledgerLine({ debit: receivables, credit: deposit('A-1'), grossCents: -1000, taxes: [tax('Reduced', 7, -65)] })];
+      expect(coverage(mapping, ledger, chart, { skr: '03' })[0]?.message).toMatch(/; fill in datev_account on the wildcard row for Liabilities at 7 % on line 5$/);
+    });
+
+    it('suggests the same wildcard row when there is no parent row at all, and the account only without an SKR', () => {
+      const ledger = [ledgerLine({ debit: receivables, credit: deposit('A-1'), grossCents: -1000, taxes: [tax('Reduced', 7, -65)] })];
+      expect(coverage(mappingOf(base), ledger, chart, { skr: '04' })[0]?.message).toMatch(/: add a wildcard row `\*;Liabilities;;7;<DATEV account>;;7` \(template: 3260\)$/);
+      expect(coverage(mappingOf(base), ledger, chart)[0]?.message).toMatch(/: add a wildcard row `\*;Liabilities;;7;<DATEV account>;;7`$/);
+    });
+
+    it('reports a per-reservation debtor and its /Offset once and suggests a 9999 row or the collective-debtor wildcard', () => {
+      const debtor = { number: 'ZAQSEFYC-1_AccountsReceivable', name: 'AccountsReceivable for Reservation ZAQSEFYC-1', type: 'AccountsReceivable', parentNumber: '9999' };
+      const offset = { ...debtor, number: `${debtor.number}/Offset`, name: `${debtor.name} (Offset)` };
+      const ledger = [
+        ledgerLine({ debit: receivables, credit: offset, command: 'PostToAccountsReceivables', grossCents: -11400, taxes: [] }),
+        ledgerLine({ debit: debtor, credit: offset, command: 'PostToAccountsReceivables', grossCents: 11400, taxes: [] }),
+      ];
+      const findings = coverage(mappingOf(base), ledger, chart, { skr: '03' });
+      expect(findings).toHaveLength(1);
+      expect(findings[0]?.message).toMatch(
+        /^2 AccountsReceivable accounts of reservations or folios under parent 9999 \(ZAQSEFYC-1_AccountsReceivable, ZAQSEFYC-1_AccountsReceivable\/Offset\) are not mapped \(3 lines, gross [-\d.]+\): add a row for 9999 AccountsReceivable or the wildcard row `\*;AccountsReceivable;;;10000` \(collective debtor\)$/,
+      );
+    });
+
+    it('passes once the AccountsReceivable wildcard exists', () => {
+      const debtor = { number: 'ZAQSEFYC-1_AccountsReceivable', name: 'AR', type: 'AccountsReceivable', parentNumber: '9999' };
+      const mapping = mappingOf([...base, mappingRow({ apaleoAccount: '*', apaleoType: 'AccountsReceivable', datevAccount: '10000' })]);
+      expect(coverage(mapping, [ledgerLine({ debit: debtor, credit: receivables, taxes: [] })], chart, { skr: '03' })).toEqual([]);
+    });
+  });
+
   it('reports E-VAT-MISMATCH when a parent row maps a 7 % revenue account to a 19 % Automatikkonto', () => {
     const mapping = mappingOf([
       mappingRow({ apaleoAccount: '5000', apaleoType: 'Revenues', apaleoName: 'Revenues', datevAccount: '8400' }),
@@ -365,7 +441,7 @@ describe('checkCoverage', () => {
     const ledger = lines([
       { credit: food, grossCents: 1200 },
       { credit: food, grossCents: 1200 },
-      { credit: drinks, grossCents: 380, taxes: [{ vatType: 'Normal', percent: 19, amountCents: 61 }] },
+      { credit: drinks, grossCents: 380, taxes: [tax('Normal', 19, 61)] },
     ]);
     const findings = coverage(mapping, ledger, undefined, { skr: '03' });
     expect(codes(findings)).toEqual(['E-VAT-MISMATCH']);

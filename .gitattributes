@@ -10,3 +10,5 @@ templates/*.csv -text
 docs/examples/*.csv -text
 docs/examples/*.txt -text
 examples/demo/** -text
+# Mapping files beside the live recordings keep the BOM and CRLF that init-mapping writes.
+test/fixtures/apaleo/live/**/*.csv -text

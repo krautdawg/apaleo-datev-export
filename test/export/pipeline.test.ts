@@ -179,15 +179,15 @@ describe('plausibility checks in the pipeline', () => {
       config: `${exportConfig()}checks:\n  aggregates: true\n`,
       data: (data) => {
         const day = data.totals?.[BSP]?.find((t) => t.businessDate === '2026-09-15');
-        const revenue = day?.accounts.find((a) => a.account.number === '5000');
-        if (revenue) revenue.credited.value = '1.00';
+        const revenue = day?.accounts.find((a) => a.account.number === '5011');
+        if (revenue) revenue.balance.value = '-1.00';
       },
     });
     const [outcome] = await run(setup);
     expect(setup.fake.calls.filter((call) => call.startsWith('getAccountTotals'))).toHaveLength(30);
     expect(outcome?.status).toBe('written');
-    expect(outcome?.findings.map((f) => [f.code, f.value])).toEqual([['W-AGGREGATE-DIFF', '5000']]);
-    expect(outcome?.findings[0]?.message).toContain("on 2026-09-15 apaleo's daily aggregate for main account 5000 (Revenues)");
+    expect(outcome?.findings.map((f) => [f.code, f.value])).toEqual([['W-AGGREGATE-DIFF', '5011']]);
+    expect(outcome?.findings[0]?.message).toContain("on 2026-09-15 apaleo's daily aggregate for account 5011 (Revenues) has the balance -1.00");
   });
 
   it('with checks.aggregates, blocks the part with a hint when apaleo refuses the aggregates', async () => {

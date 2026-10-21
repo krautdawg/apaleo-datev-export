@@ -45,6 +45,65 @@ export function decimalToCents(value: string): number {
   return sign === '-' && cents !== 0 ? -cents : cents;
 }
 
+/**
+ * Exact arithmetic on precise decimal text (apaleo sends net and tax amounts
+ * with up to eight decimals). Values are scaled integers internally, never
+ * floating-point numbers, so a sum of many precise amounts is exact.
+ */
+interface Scaled {
+  /** The value is `units / 10^scale`. */
+  units: bigint;
+  scale: number;
+}
+
+function toScaled(value: string): Scaled {
+  const match = DECIMAL.exec(value.trim());
+  if (!match) throw new TypeError(`Not a decimal number: ${value}`);
+  const [, sign, int = '', frac = '', exponent = '0'] = match;
+  const scale = frac.length - Number(exponent);
+  const digits = BigInt(int + frac || '0');
+  const units = scale < 0 ? digits * 10n ** BigInt(-scale) : digits;
+  return { units: sign === '-' ? -units : units, scale: Math.max(scale, 0) };
+}
+
+function rescale({ units, scale }: Scaled, to: number): bigint {
+  return units * 10n ** BigInt(to - scale);
+}
+
+/** Plain decimal text without exponent or trailing zeros, for example `"-0.65420561"` or `"114"`. */
+function fromScaled({ units, scale }: Scaled): string {
+  const digits = (units < 0n ? -units : units).toString().padStart(scale + 1, '0');
+  const int = digits.slice(0, digits.length - scale);
+  const frac = digits.slice(digits.length - scale).replace(/0+$/, '');
+  const text = frac === '' ? int : `${int}.${frac}`;
+  return units < 0n ? `-${text}` : text;
+}
+
+/** The same decimal written plainly: `"1e-7"` → `"0.0000001"`, `"12.50"` → `"12.5"`. */
+export function normaliseDecimal(value: string): string {
+  return fromScaled(toScaled(value));
+}
+
+/** The exact sum of precise decimals, as plain decimal text (`"0"` for none). */
+export function sumDecimals(values: readonly string[]): string {
+  const scaled = values.map(toScaled);
+  const scale = Math.max(0, ...scaled.map((s) => s.scale));
+  return fromScaled({ units: scaled.reduce((sum, s) => sum + rescale(s, scale), 0n), scale });
+}
+
+export function negateDecimal(value: string): string {
+  const { units, scale } = toScaled(value);
+  return fromScaled({ units: -units, scale });
+}
+
+/** -1, 0 or 1 as `a` is less than, equal to or greater than `b`. */
+export function compareDecimals(a: string, b: string): number {
+  const [x, y] = [toScaled(a), toScaled(b)];
+  const scale = Math.max(x.scale, y.scale);
+  const difference = rescale(x, scale) - rescale(y, scale);
+  return difference === 0n ? 0 : difference < 0n ? -1 : 1;
+}
+
 /** Integer cents as a plain decimal with two places, for example `-1234` → `"-12.34"`. */
 export function formatCents(cents: number): string {
   const sign = cents < 0 ? '-' : '';

@@ -4,18 +4,23 @@ Das Tool liest dein apaleo-Konto über eine **Custom App**: einen kleinen API-Zu
 
 Du brauchst einen apaleo-Benutzer mit Admin-Rechten für das Konto. Es dauert etwa zehn Minuten.
 
-Die Bezeichnungen unten folgen der apaleo-Dokumentation, Stand Oktober 2026. Sieht dein Bildschirm etwas anders aus: Entscheidend sind der Client-Typ und die Berechtigungen.
+Die Bezeichnungen unten folgen den Bildschirmen von apaleo, wie sie beim ersten Live-Test im Oktober 2026 aussahen (apaleo zeigt sie auf Englisch). Sieht dein Bildschirm etwas anders aus: Entscheidend sind der Client-Typ, die Berechtigungen und die Hotels.
 
 ## 1. App anlegen
 
 1. Melde dich bei apaleo an und öffne **Apps > Connected apps**.
-2. Wähle **Add custom app**.
-3. Client-Typ: **simple client** (Client Credentials). Wähle keinen Connect Client; der ist für Apps im apaleo Store.
-4. Zugriff: Wähle **fine-grained permissions** (von apaleo empfohlen) statt Scopes. Damit kannst du auch die Hotels (Properties) auswählen.
-5. Client-Code: 3 bis 30 Zeichen, Großbuchstaben, Ziffern und `_`, zum Beispiel `DATEV_EXPORT`.
-6. Fragt apaleo nach dem Zugriff auf personenbezogene Daten (PII): Das Tool schreibt nie Gästenamen in die DATEV-Datei, wurde aber nicht mit ausgeschalteter Option getestet. Laut apaleo lässt sich die Wahl später nicht ändern; lass sie im Zweifel auf der Voreinstellung von apaleo.
+2. Klick auf **Add a new app** und dann auf **Add custom app**. Wähle keinen Connect Client; der ist für Apps im apaleo Store.
+3. Es öffnet sich die Seite **New simple client** (Client Credentials). Trag einen Namen ein, zum Beispiel `DATEV Export`.
+4. Das Feld **Secret description** ist Pflicht: Beschreib, wofür das Secret ist, zum Beispiel `apaleo-datev-export, Buchungsexport für die Kanzlei`.
+5. Wähle einen **fine-grained** Client (feingranulare Berechtigungen, von apaleo empfohlen) statt Scopes. Damit wählst du die Hotels und jede Berechtigung einzeln.
 
-## 2. Diese Berechtigungen vergeben
+## 2. Hotels auswählen
+
+Beim Zugriff auf die Hotels (Properties) wählst du **All properties** oder **Only selected properties**. Mit **Only selected properties** hakst du jedes Hotel an, das du exportieren willst. Ein Hotel, das die App nicht sieht, meldet das Tool als `E-PROPERTY-UNKNOWN`.
+
+## 3. Diese Berechtigungen vergeben
+
+Such jede Berechtigung über das Feld **Search permission** und füge sie hinzu:
 
 | Berechtigung | Was das Tool damit liest | |
 |---|---|---|
@@ -28,9 +33,9 @@ Die beiden „create“-Berechtigungen klingen nach Schreiben. apaleo nutzt sie 
 
 Hast du stattdessen einen Scope-Client angelegt, braucht er den Scope `accounting.read`, und du trägst ihn in der Konfiguration unter `apaleo.scopes` ein.
 
-## 3. Hotels auswählen
+### Personenbezogene Daten (PII)
 
-Wähle jedes Hotel aus, das du exportieren willst. Ein Hotel, das die App nicht sieht, meldet das Tool als `E-PROPERTY-UNKNOWN`.
+apaleo fragt, ob die App personenbezogene Daten bekommt: **Retrieve** (alles), **Omit linked** (verknüpfte Personendaten weglassen) oder **Omit all** (alle weglassen). Wähle **Omit all**. Der Export braucht keine personenbezogenen Daten; das ist live getestet: Kontenplan, Buchungsexport und Tagessummen kommen vollständig, und das Tool schreibt ohnehin nie Gästenamen in die DATEV-Datei. Laut apaleo lässt sich die Wahl später nicht ändern.
 
 ## 4. Client-ID und Secret kopieren
 

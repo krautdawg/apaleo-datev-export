@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { isErrorFinding } from '../../src/core/findings.js';
 import type { LedgerLine } from '../../src/core/source.js';
-import { ledgerLine } from '../helpers/ledger.js';
+import { ledgerLine, tax as taxEntry } from '../helpers/ledger.js';
 import { mappingRow } from '../helpers/mapping.js';
 import { ACCOUNTS, mappingWith, post } from '../helpers/posting.js';
 
@@ -14,7 +14,7 @@ import { ACCOUNTS, mappingWith, post } from '../helpers/posting.js';
  */
 
 const codes = (findings: readonly { code: string }[]) => findings.map((f) => f.code);
-const tax = (percent: number, amountCents: number) => [{ vatType: percent === 7 ? 'Reduced' : 'Normal', percent, amountCents }];
+const tax = (percent: number, amountCents: number) => [taxEntry(percent === 7 ? 'Reduced' : 'Normal', percent, amountCents)];
 
 function single(line: LedgerLine, mapping = mappingWith()) {
   const result = post([line], mapping);
@@ -69,7 +69,7 @@ describe('VAT side in Gegenkonto', () => {
   it('takes the BU key from the VAT-side row', () => {
     // A 19 % revenue account on 8200 (no Automatik) with BU key 3: 11900 × 19 / 119 = 1900.
     const mapping = mappingWith(mappingRow({ apaleoAccount: '5919', apaleoType: 'Revenues', apaleoVatPercent: '19', datevAccount: '8200', buKey: '3' }));
-    const other = { number: '5919', name: 'Other Revenues 19%', type: 'Revenues', parentNumber: '5900' };
+    const other = { number: '5919', name: 'Other Revenues 19%', type: 'Revenues', parentNumber: 'RevenueOther' };
     const { booking, findings } = single(ledgerLine({ credit: other, grossCents: 11_900, taxes: tax(19, 1_900) }), mapping);
     expect(findings).toEqual([]);
     expect(booking).toMatchObject({ konto: '1410', gegenkonto: '8200', buKey: '3', side: 'S' });
@@ -94,7 +94,7 @@ describe('VAT consistency guard', () => {
     const { booking, findings, summary } = single(ledgerLine({ credit: ACCOUNTS.beverages19, grossCents: 2_380, netCents: 2_000, taxes: tax(19, 380) }));
     expect(findings).toEqual([]);
     expect(booking).toMatchObject({ gegenkonto: '8400', amountCents: 2_380 });
-    expect(summary.revenueByRate).toEqual([{ ratePercent: 19, grossCents: 2_380, vatCents: 380 }]);
+    expect(summary.revenueByRate).toEqual([{ ratePercent: 19, grossCents: 2_380, vatCents: 380, apaleoVat: '3.8' }]);
   });
 
   it('passes breakfast food 12.00 at 7 % (VAT 0.79) and coffee 3.00 at 19 % (VAT 0.48) of a package night', () => {
@@ -108,7 +108,7 @@ describe('VAT consistency guard', () => {
 
   it('drops a Without entry of 0 % and 0.00 on city tax instead of raising E-VAT-MISSING', () => {
     const { booking, findings } = single(
-      ledgerLine({ credit: ACCOUNTS.cityTax, grossCents: 500, netCents: 500, taxes: [{ vatType: 'Without', percent: 0, amountCents: 0 }] }),
+      ledgerLine({ credit: ACCOUNTS.cityTax, grossCents: 500, netCents: 500, taxes: [taxEntry('Without', 0, 0)] }),
     );
     expect(findings).toEqual([]);
     expect(booking).toMatchObject({ konto: '1410', gegenkonto: '1590', side: 'S', amountCents: 500 });
@@ -117,7 +117,7 @@ describe('VAT consistency guard', () => {
   it('compares the magnitudes of a negative allowance and its negative tax', () => {
     const { findings, summary } = single(ledgerLine({ grossCents: -1_000, taxes: tax(7, -65) }));
     expect(findings).toEqual([]);
-    expect(summary.revenueByRate).toEqual([{ ratePercent: 7, grossCents: -1_000, vatCents: -65 }]);
+    expect(summary.revenueByRate).toEqual([{ ratePercent: 7, grossCents: -1_000, vatCents: -65, apaleoVat: '-0.65' }]);
   });
 
   it('blocks a line taxed at 7 % on an account mapped to 19 % with E-VAT-RATE', () => {
@@ -213,6 +213,69 @@ describe('city tax and guest levies', () => {
   });
 });
 
+describe('real apaleo shapes (recorded sandbox, 2026-10-21)', () => {
+  const girocard = { number: '1107', name: 'GiroCard Payment', type: 'Payments', parentNumber: '1000' };
+  const folio = { number: 'LJJRUJKV-1_Receivables', name: 'Receivables for Reservation LJJRUJKV-1', type: 'Receivables', parentNumber: '1200' };
+  const deposit7 = { number: 'LJJRUJKV-1_Liabilities/Reduced:7.00', name: 'Liabilities for Reservation LJJRUJKV-1 (7%)', type: 'Liabilities', parentNumber: '3000' };
+  const deposit0 = { number: 'EPEBVUIU-1_Liabilities/Null:0.00', name: 'Liabilities for Reservation EPEBVUIU-1 (0%)', type: 'Liabilities', parentNumber: '3000' };
+
+  it('passes a precise tax: gross 114.00 with 7.45794393 at 7 % is 7.46 in DATEV and in apaleo', () => {
+    // 11400 × 7 / 107 = 745.79 → 7.46; apaleo's 7.45794393 rounds half away from zero to 7.46.
+    const { findings, summary } = single(ledgerLine({ grossCents: 11_400, taxes: [taxEntry('Reduced', 7, 746, '7.45794393')] }));
+    expect(findings).toEqual([]);
+    expect(summary.revenueByRate).toEqual([{ ratePercent: 7, grossCents: 11_400, vatCents: 746, apaleoVat: '7.45794393' }]);
+  });
+
+  it('books a release as a negative charge: 1410 against 1711, side H, counted as released', () => {
+    // 8400 × 7 / 107 = 549.53 → 5.50, apaleo -5.4953271 → -5.50.
+    const line = ledgerLine({ debit: folio, credit: deposit7, grossCents: -8_400, taxes: [taxEntry('Reduced', 7, -550, '-5.4953271')] });
+    const { booking, findings, summary } = single(line);
+    expect(findings).toEqual([]);
+    expect(booking).toMatchObject({ amountCents: 8_400, konto: '1410', gegenkonto: '1711', side: 'H', buchungstext: 'Auflösung Anzahlung 7 %' });
+    expect(summary.deposits).toEqual({ receivedCents: 0, releasedCents: 8_400, refundedCents: 0 });
+    expect(summary.depositVatByRate).toEqual([{ ratePercent: 7, grossCents: -8_400, vatCents: -550, apaleoVat: '-5.4953271' }]);
+  });
+
+  it('books a refund as a negative prepayment: 1360 against 1719, side H, counted as released and refunded', () => {
+    const line = ledgerLine({ debit: girocard, credit: deposit0, command: 'PostPrepayment', grossCents: -1_000, taxes: [] });
+    const { booking, findings, summary } = single(line);
+    expect(findings).toEqual([]);
+    expect(booking).toMatchObject({ amountCents: 1_000, konto: '1360', gegenkonto: '1719', side: 'H', buchungstext: 'Erstattung Anzahlung 0 %' });
+    expect(summary.deposits).toEqual({ receivedCents: 0, releasedCents: 1_000, refundedCents: 1_000 });
+    expect(summary.payments).toEqual([{ account: '1360', cents: -1_000 }]);
+  });
+
+  it('counts an overpayment parked on the 0 % deposit as received', () => {
+    const line = ledgerLine({ debit: folio, credit: deposit0, grossCents: 1_000, taxes: [] });
+    const { booking, summary } = single(line);
+    expect(booking).toMatchObject({ konto: '1410', gegenkonto: '1719', side: 'S', buchungstext: 'Umbuchung Anzahlung 0 %' });
+    expect(summary.deposits).toEqual({ receivedCents: 1_000, releasedCents: 0, refundedCents: 0 });
+  });
+
+  it('sums the accounts-receivable movement and lists skipped lines unsigned', () => {
+    const debtor = { number: 'ZAQSEFYC-1_AccountsReceivable', name: 'AR', type: 'AccountsReceivable', parentNumber: '9999' };
+    const offset = { ...debtor, number: `${debtor.number}/Offset` };
+    const mapping = mappingWith(mappingRow({ apaleoAccount: '*', apaleoType: 'AccountsReceivable', datevAccount: '10000' }));
+    const transfer = { command: 'PostToAccountsReceivables', taxes: [] };
+    const { bookings, skipped, summary } = post(
+      [
+        ledgerLine({ ...transfer, debit: folio, credit: offset, grossCents: -11_400, sourceEntryNumber: '000000030' }),
+        ledgerLine({ ...transfer, debit: debtor, credit: offset, grossCents: 11_400, sourceEntryNumber: '000000030' }),
+        ledgerLine({ debit: girocard, credit: { ...folio, number: `${folio.number}/Offset` }, command: 'PostPayment', grossCents: 90, taxes: [] }),
+        ledgerLine({ debit: folio, credit: { ...folio, number: `${folio.number}/Offset` }, command: 'PostPayment', grossCents: -90, taxes: [] }),
+      ],
+      mapping,
+    );
+    expect(bookings.map((b) => [b.konto, b.gegenkonto, b.side, b.amountCents, b.buchungstext])).toEqual([
+      ['1410', '10000', 'H', 11_400, 'Forderung an Debitor'],
+      ['1360', '1410', 'S', 90, 'Zahlung Girocard'],
+    ]);
+    expect(summary.accountsReceivableCents).toBe(11_400);
+    expect(skipped).toHaveLength(2);
+    expect(summary.skipped).toEqual([{ reason: 'SAME_ACCOUNT', lines: 2, grossCents: 11_490 }]);
+  });
+});
+
 describe('deposits and accounts receivable', () => {
   it('books a prepayment 200.00 at 7 % (VAT 13.08) to the versteuerte Anzahlungen 1711', () => {
     // Per-reservation _Liabilities account without parent: resolved through the 7 % Liabilities wildcard.
@@ -222,7 +285,8 @@ describe('deposits and accounts receivable', () => {
     );
     expect(findings).toEqual([]);
     expect(booking).toMatchObject({ amountCents: 20_000, konto: '1360', gegenkonto: '1711', side: 'S' });
-    expect(summary.deposits).toEqual({ receivedCents: 20_000, releasedCents: 0 });
+    expect(summary.deposits).toEqual({ receivedCents: 20_000, releasedCents: 0, refundedCents: 0 });
+    expect(booking?.buchungstext).toBe('Anzahlung 7 %');
   });
 
   it('books a check-out on accounts receivable 300.00 to the collective debtor with the invoice number', () => {

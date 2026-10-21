@@ -5,9 +5,9 @@ Fabricated responses shaped exactly like the apaleo Swagger models. No real hote
 | File | Swagger model | What it holds |
 |---|---|---|
 | `properties/page-1.json` | PropertyListModel | `BSP` Hotel Beispiel (Europe/Berlin) and `HBW` Hotel Beispiel Wien. Page 2 is answered with 204. |
-| `accounts-schema.json` | ChartOfAccountsModel | Chart at depth 4: payments (cash, Visa, Mastercard), revenues per VAT rate (accommodation 7/19 %, food 7 %, beverages 19 %, archived other 0 %), VAT, VAT on liabilities, city tax 0 %, AR, house; `1200` in guest and external accounts, `3000` in guest and booking accounts. |
+| `accounts-schema.json` | ChartOfAccountsModel | Chart at depth 4: payments (cash, Visa, Mastercard), revenues per VAT rate under apaleo's standard groups `RevenueAccommodation` (7/19 %), `RevenueFoodAndBeverages` (food 7 %, beverages 19 %) and `RevenueOther` (archived 0 %), VAT, VAT on liabilities, city tax 0 %, AR, house; `1200` in guest and external accounts, `3000` in guest and booking accounts. |
 | `export-gross-daily/<day>.json` | ExportGrossTransactionListModel | The ledger of one business day (below). Days without a file are answered with 204. |
-| `aggregate-daily/<day>.json` | AggregateTransactionListModel | Gross totals per main account for the same day, with four-decimal precise amounts on some days. |
+| `aggregate-daily/<day>.json` | AggregateTransactionListModel | apaleo's daily totals for the same day in the shape of the real API (see `live/`): leaf global accounts (payment methods, revenue and VAT sub-accounts) and only the top-level parent of guest accounts (`1200`, `3000`); revenue and deposits net, VAT accounts with the taxes, everything else gross. |
 
 Business days (September 2026, so the demo month 2026-09 is always closed):
 
@@ -22,4 +22,4 @@ Variant (a) (the `BSP-GHIJKL-1` prepayment of 09-14, released on 09-21) has no V
 
 Per-reservation accounts (`BSP-ABCDEF-1_Receivables`, `BSP-GHIJKL-1_Liabilities`, ...) have no `parentNumber` and are not in the chart, like the account `QPMZZTUK-1_Receivables` in the Swagger example.
 
-Real responses are welcome: if you run `apaleo-datev live-smoke` against a real account and the shapes differ, please anonymise names, reservation ids and amounts and add them as a new fixture day.
+Recorded real responses of an apaleo DEV sandbox (properties `BER` and `VIE`, with eight-decimal net and tax amounts) are in [`live/`](live/README.md); the regression tests run the whole pipeline on them. More real responses are welcome: if you run `apaleo-datev live-smoke` against a real account and the shapes differ, please run the privacy scan (`node test/helpers/fixture-scan.ts <folder>`), anonymise names, reservation ids and amounts, and add them as a new fixture day.

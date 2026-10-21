@@ -43,7 +43,7 @@ describe('FakeSource', () => {
       const lines = await source.getLedger(BSP, day, nextDay(day));
       const comparison = compareAggregates(await source.getAccountTotals(BSP, day), lines, chart);
       expect(comparison.length, day).toBeGreaterThan(0);
-      expect(comparison.filter((c) => c.match !== 'gross' && c.match !== 'both'), day).toEqual([]);
+      expect(comparison.filter((c) => !c.match), day).toEqual([]);
     }
     expect(source.calls[0]).toBe(`getChartOfAccounts ${BSP}`);
   });

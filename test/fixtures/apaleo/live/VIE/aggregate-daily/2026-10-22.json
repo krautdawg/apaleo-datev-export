@@ -1,0 +1,170 @@
+{
+  "aggregations": [
+    {
+      "account": {
+        "name": "Revenues Accommodation (13%)",
+        "number": "RevenueAccommodation_Reduced:13.00",
+        "type": "Revenues"
+      },
+      "creditedAmount": {
+        "amount": 82.31858407,
+        "currency": "EUR"
+      },
+      "debitedAmount": {
+        "amount": 0,
+        "currency": "EUR"
+      },
+      "balance": {
+        "amount": -82.31858407,
+        "currency": "EUR"
+      }
+    },
+    {
+      "account": {
+        "name": "Revenues Food and beverages (20%)",
+        "number": "RevenueFoodAndBeverages_Normal:20.00",
+        "type": "Revenues"
+      },
+      "creditedAmount": {
+        "amount": 16.65,
+        "currency": "EUR"
+      },
+      "debitedAmount": {
+        "amount": 0,
+        "currency": "EUR"
+      },
+      "balance": {
+        "amount": -16.65,
+        "currency": "EUR"
+      }
+    },
+    {
+      "account": {
+        "name": "VAT Normal (20%)",
+        "number": "Vat_Normal:20.00",
+        "type": "Vat"
+      },
+      "creditedAmount": {
+        "amount": 3.33,
+        "currency": "EUR"
+      },
+      "debitedAmount": {
+        "amount": 0,
+        "currency": "EUR"
+      },
+      "balance": {
+        "amount": -3.33,
+        "currency": "EUR"
+      }
+    },
+    {
+      "account": {
+        "name": "VAT Reduced (13%)",
+        "number": "Vat_Reduced:13.00",
+        "type": "Vat"
+      },
+      "creditedAmount": {
+        "amount": 10.70141593,
+        "currency": "EUR"
+      },
+      "debitedAmount": {
+        "amount": 0,
+        "currency": "EUR"
+      },
+      "balance": {
+        "amount": -10.70141593,
+        "currency": "EUR"
+      }
+    },
+    {
+      "account": {
+        "name": "Receivables",
+        "number": "1200",
+        "type": "Receivables"
+      },
+      "creditedAmount": {
+        "amount": 113,
+        "currency": "EUR"
+      },
+      "debitedAmount": {
+        "amount": 113,
+        "currency": "EUR"
+      },
+      "balance": {
+        "amount": 0,
+        "currency": "EUR"
+      }
+    },
+    {
+      "account": {
+        "name": "Liabilities",
+        "number": "3000",
+        "type": "Liabilities"
+      },
+      "creditedAmount": {
+        "amount": 0,
+        "currency": "EUR"
+      },
+      "debitedAmount": {
+        "amount": 98.96858407,
+        "currency": "EUR"
+      },
+      "balance": {
+        "amount": 98.96858407,
+        "currency": "EUR"
+      }
+    },
+    {
+      "account": {
+        "name": "LiabilitiesVat Normal (20%)",
+        "number": "LiabilitiesVat_Normal:20.00",
+        "type": "VatOnLiabilities"
+      },
+      "creditedAmount": {
+        "amount": 0,
+        "currency": "EUR"
+      },
+      "debitedAmount": {
+        "amount": 3.33,
+        "currency": "EUR"
+      },
+      "balance": {
+        "amount": 3.33,
+        "currency": "EUR"
+      }
+    },
+    {
+      "account": {
+        "name": "LiabilitiesVat Reduced (13%)",
+        "number": "LiabilitiesVat_Reduced:13.00",
+        "type": "VatOnLiabilities"
+      },
+      "creditedAmount": {
+        "amount": 0,
+        "currency": "EUR"
+      },
+      "debitedAmount": {
+        "amount": 10.70141593,
+        "currency": "EUR"
+      },
+      "balance": {
+        "amount": 10.70141593,
+        "currency": "EUR"
+      }
+    }
+  ],
+  "total": {
+    "creditedAmount": {
+      "amount": 226,
+      "currency": "EUR"
+    },
+    "debitedAmount": {
+      "amount": 226,
+      "currency": "EUR"
+    },
+    "balance": {
+      "amount": 0,
+      "currency": "EUR"
+    }
+  }
+}

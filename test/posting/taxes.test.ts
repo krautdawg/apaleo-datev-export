@@ -1,14 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import { datevVat, normaliseTaxes } from '../../src/posting/index.js';
+import { tax } from '../helpers/ledger.js';
 
 describe('normaliseTaxes', () => {
   it('drops entries with percent 0 and amount 0 and keeps every other entry', () => {
-    const without = { vatType: 'Without', percent: 0, amountCents: 0 };
-    const reduced = { vatType: 'Reduced', percent: 7, amountCents: 654 };
-    const oddZero = { vatType: 'Without', percent: 0, amountCents: 12 };
+    const without = tax('Without', 0, 0);
+    const reduced = tax('Reduced', 7, 654);
+    const oddZero = tax('Without', 0, 12);
     expect(normaliseTaxes([without])).toEqual([]);
     expect(normaliseTaxes([without, reduced, oddZero])).toEqual([reduced, oddZero]);
-    expect(normaliseTaxes([{ vatType: 'Reduced', percent: 7, amountCents: 0 }])).toHaveLength(1);
+    expect(normaliseTaxes([tax('Reduced', 7, 0)])).toHaveLength(1);
   });
 });
 

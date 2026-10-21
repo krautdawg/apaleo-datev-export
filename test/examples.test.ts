@@ -50,7 +50,7 @@ describe('docs/examples', () => {
 describe('examples/demo', () => {
   it('holds exact copies of the Hotel Beispiel apaleo fixtures', () => {
     const recorded = filesIn('examples/demo/apaleo');
-    expect(recorded).toEqual(filesIn('test/fixtures/apaleo').filter((file) => file.endsWith('.json') && !file.includes('swagger')));
+    expect(recorded).toEqual(filesIn('test/fixtures/apaleo').filter((file) => file.endsWith('.json') && !file.includes('swagger') && !file.startsWith('live/')));
     for (const file of recorded) {
       expect(read(`examples/demo/apaleo/${file}`).equals(read(`test/fixtures/apaleo/${file}`)), file).toBe(true);
     }

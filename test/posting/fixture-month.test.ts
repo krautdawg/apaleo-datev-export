@@ -15,13 +15,18 @@ import { LEDGER, post } from '../helpers/posting.js';
  * City tax (1590): 5 × 3 = 15.00.
  * Payments: 1360 = prepayments 200 + 150, card 120 + 100 = 570.00; Kasse 1000 = 23.80.
  * Deposits (1711): received 200 + 150 = 350.00, released 200 (with taxes) +
- *   150 (from the PostPrepaymentVat pair, 9.81 = 150 × 7 / 107) = 350.00.
- * Debtor 10000: 115.00.
+ *   150 (from the PostPrepaymentVat pair, 9.81 = 150 × 7 / 107) = 350.00,
+ *   none refunded. Deposit VAT at 7 %: 13.08 + 9.81 − 13.08 − 9.81 = 0, in
+ *   DATEV and in apaleo (the fixture's taxes are whole cents, so apaleo's
+ *   precise VAT is 43.44 and 4.76 on revenue too).
+ * Debtor 10000: 115.00 (the accounts-receivable movement).
  * 1410 Soll: charges 143.80 (09-14) + 120 + 100 + 5 (09-15) + 200 + 150 = 718.80;
  *   Haben: allowance 10 + card 120 + cash 23.80 + AR 115 + card 100 + releases
  *   200 + 150 = 718.80: the guest folios balance to zero.
- * Skipped: two PostPrepaymentVat lines (9.81 + 9.81 = 19.62, VAT_ACCOUNT_LINE),
- *   the 5.00 folio move (SAME_ACCOUNT). 25 − 3 = 22 bookings.
+ * Skipped (unsigned): two PostPrepaymentVat lines (9.81 + 9.81 = 19.62,
+ *   VAT_ACCOUNT_LINE), the 5.00 folio move (SAME_ACCOUNT). 25 − 3 = 22 bookings.
+ * Buchungstext: German only, for example "Zahlung Visa", "Zahlung Bar",
+ *   "Anzahlung 7 %", "Auflösung Anzahlung 7 %", "Forderung an Debitor".
  */
 describe('posting the fixture month', () => {
   const result = post(LEDGER);
@@ -46,15 +51,17 @@ describe('posting the fixture month', () => {
         { account: '10000', sollCents: 11_500, habenCents: 0, balanceCents: 11_500 },
       ],
       revenueByRate: [
-        { ratePercent: 7, grossCents: 66_400, vatCents: 4_344 },
-        { ratePercent: 19, grossCents: 2_980, vatCents: 476 },
+        { ratePercent: 7, grossCents: 66_400, vatCents: 4_344, apaleoVat: '43.44' },
+        { ratePercent: 19, grossCents: 2_980, vatCents: 476, apaleoVat: '4.76' },
       ],
+      depositVatByRate: [{ ratePercent: 7, grossCents: 0, vatCents: 0, apaleoVat: '0' }],
       cityTaxCents: 1_500,
       payments: [
         { account: '1000', cents: 2_380 },
         { account: '1360', cents: 57_000 },
       ],
-      deposits: { receivedCents: 35_000, releasedCents: 35_000 },
+      deposits: { receivedCents: 35_000, releasedCents: 35_000, refundedCents: 0 },
+      accountsReceivableCents: 11_500,
       skipped: [
         { reason: 'VAT_ACCOUNT_LINE', lines: 2, grossCents: 1_962 },
         { reason: 'SAME_ACCOUNT', lines: 1, grossCents: 500 },
@@ -90,6 +97,8 @@ describe('posting the fixture month', () => {
     const rendered = renderBuchungsstapel({ header, bookings: result.bookings });
     expect(rendered.text.split('\r\n')).toHaveLength(2 + 22 + 1);
     expect(rendered.warnings).toEqual([]);
-    expect(rendered.text).toContain('"Zahlung Gastforderung"');
+    for (const text of ['Zahlung Visa', 'Zahlung Bar', 'Anzahlung 7 %', 'Auflösung Anzahlung 7 %', 'Forderung an Debitor']) {
+      expect(rendered.text).toContain(`"${text}"`);
+    }
   });
 });

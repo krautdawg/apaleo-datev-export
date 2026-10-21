@@ -1,12 +1,12 @@
-import { compareAggregates, type DebitCredit } from '../core/aggregates.js';
+import { compareAggregates } from '../core/aggregates.js';
 import type { ChartIndex } from '../core/chart.js';
 import { eachDay, nextDay, type LocalDate } from '../core/date.js';
 import { REPORT_PROBLEM_HINT } from '../core/errors.js';
 import type { Finding } from '../core/findings.js';
-import { formatCents } from '../core/money.js';
+import { formatCents, negateDecimal, sumDecimals } from '../core/money.js';
 import type { LedgerLine, SourceAdapter } from '../core/source.js';
-import { VAT_RELEVANT_TYPES, datevVatRate, impliedVatRate, resolve, type Mapping, type Skr } from '../mapping/index.js';
-import { datevVat, inferReleaseRates, normaliseTaxes, resolutionRate, type PostingResult } from '../posting/index.js';
+import { datevVatRate, impliedVatRate, resolve, type Mapping, type Skr } from '../mapping/index.js';
+import { apaleoVatOf, datevVat, inferReleaseRates, resolutionRate, type PostingResult } from '../posting/index.js';
 import type { DateRange } from './period.js';
 
 /**
@@ -93,34 +93,24 @@ export function checkAccountMovements(lines: readonly LedgerLine[], result: Post
   });
 }
 
-/**
- * +1 when the line credits its VAT-relevant account (revenue, deposit received),
- * -1 when it debits it (deposit released or refunded): VAT owed goes up or down.
- */
-function vatDirection(line: LedgerLine): number {
-  const debit = VAT_RELEVANT_TYPES.has(line.debit.type);
-  const credit = VAT_RELEVANT_TYPES.has(line.credit.type);
-  return debit && !credit ? -1 : 1;
+/** apaleo's VAT per rate: the per-line taxes rounded to cents (for the check) and their precise sum (for the message). */
+interface ApaleoVatTotal {
+  cents: number;
+  precise: string[];
 }
 
 /** VAT owed per rate in apaleo: the taxes of the booked lines, and for untaxed deposit lines the VAT apaleo moved for them. */
-function apaleoVatByRate(lines: readonly LedgerLine[], result: PostingResult, chart: ChartIndex): Map<number, number> {
+function apaleoVatByRate(lines: readonly LedgerLine[], result: PostingResult, chart: ChartIndex): Map<number, ApaleoVatTotal> {
   const skipped = new Set(result.skipped.map((entry) => entry.line));
   const releases = inferReleaseRates(lines, chart);
-  const pairsCounted = new Set<string>();
-  const vat = new Map<number, number>();
+  const vat = new Map<number, ApaleoVatTotal>();
   for (const line of lines) {
     if (skipped.has(line)) continue;
-    const taxes = normaliseTaxes(line.taxes);
-    for (const tax of taxes) add(vat, tax.percent, vatDirection(line) * tax.amountCents);
-    const release = taxes.length === 0 ? releases.get(line) : undefined;
-    if (release?.kind === 'pair') {
-      // One amount for all deposit lines of the pair; pairVatCents counts VAT taken off as positive.
-      const key = `${line.businessDate} ${line.reference} ${release.pairEntries.join(' ')}`;
-      if (!pairsCounted.has(key)) add(vat, release.rate, -release.pairVatCents);
-      pairsCounted.add(key);
-    } else if (release?.kind === 'chart') {
-      add(vat, release.rate, vatDirection(line) * datevVat(line.grossCents, release.rate));
+    for (const { rate, cents, precise } of apaleoVatOf(line, releases.get(line))) {
+      const entry = vat.get(rate) ?? { cents: 0, precise: [] };
+      entry.cents += cents;
+      entry.precise.push(precise);
+      vat.set(rate, entry);
     }
   }
   return vat;
@@ -165,15 +155,20 @@ export function checkVatByRate(lines: readonly LedgerLine[], result: PostingResu
   const rates = [...new Set([...apaleo.keys(), ...datev.keys()])].sort((a, b) => a - b);
   return rates.flatMap((rate) => {
     const allowance = result.vatRoundingByRate.get(rate) ?? 0;
-    const charged = apaleo.get(rate) ?? 0;
+    const charged = apaleo.get(rate)?.cents ?? 0;
+    const precise = sumDecimals(apaleo.get(rate)?.precise ?? []);
     const computed = datev.get(rate) ?? 0;
     if (Math.abs(computed - charged) <= allowance) return [];
+    const lineRounding = sumDecimals([formatCents(charged), negateDecimal(precise)]);
     return [
       {
         code: 'E-VAT-TOTAL',
         message:
           `at ${rate} % DATEV will compute ${formatCents(computed)} VAT from the bookings, but apaleo charged ${formatCents(charged)} ` +
-          `(difference ${formatCents(computed - charged)}, the rounding total allows ${formatCents(allowance)}). ${REPORT_PROBLEM_HINT}`,
+          `as the sum of its per-line tax rounded to cents (difference ${formatCents(computed - charged)}, the rounding total allows ` +
+          `${formatCents(allowance)}). apaleo's precise total is ${precise}; its per-line rounding (${lineRounding}) is already allowed for, ` +
+          `so the remaining difference of ${formatCents(computed - charged)} is the problem. ` +
+          REPORT_PROBLEM_HINT,
         value: String(rate),
       },
     ];
@@ -185,12 +180,13 @@ export function plausibilityFindings(lines: readonly LedgerLine[], result: Posti
   return [...checkConservation(lines, result), ...checkAccountMovements(lines, result, options), ...checkVatByRate(lines, result, options)];
 }
 
-const amounts = ({ debitCents, creditCents }: DebitCredit) => `debit ${formatCents(debitCents)}, credit ${formatCents(creditCents)}`;
+/** How the ledger side of an aggregate comparison was added up, for messages. */
+const BASIS_TEXT = { gross: 'gross amounts', net: 'precise net amounts', tax: 'precise taxes' } as const;
 
 /**
  * The opt-in completeness check (`checks.aggregates`): apaleo's daily aggregates,
- * one request per business day, against that day's ledger lines rolled up to
- * their main accounts. A main account that matches neither gross nor net is a
+ * one request per business day, against that day's ledger lines by balance (see
+ * `compareAggregates`). An account whose balances differ is a
  * `W-AGGREGATE-DIFF` warning.
  */
 export async function checkAggregates(
@@ -206,14 +202,14 @@ export async function checkAggregates(
     const totals = await source.getAccountTotals(propertyId, day);
     const dayLines = lines.filter((line) => line.businessDate === day);
     for (const comparison of compareAggregates(totals, dayLines, chart)) {
-      if (comparison.match !== 'none') continue;
+      if (comparison.match) continue;
       const { account } = comparison;
       findings.push({
         code: 'W-AGGREGATE-DIFF',
         message:
-          `on ${day} apaleo's daily aggregate for main account ${account.number} (${account.type}) shows ${amounts(comparison.source)}, ` +
-          `but the ledger lines of that day add up to ${amounts(comparison.gross)} gross (${amounts(comparison.net)} net). ` +
-          'Compare the day in apaleo; the file is written anyway',
+          `on ${day} apaleo's daily aggregate for account ${account.number} (${account.type}) has the balance ` +
+          `${formatCents(comparison.sourceBalanceCents)}, but the ledger lines of that day add up to ${formatCents(comparison.ledgerBalanceCents)} ` +
+          `(balance debit minus credit, from the ${BASIS_TEXT[comparison.basis]}). Compare the day in apaleo; the file is written anyway`,
         value: account.number,
       });
     }

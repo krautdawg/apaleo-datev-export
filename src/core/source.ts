@@ -47,13 +47,18 @@ export interface LedgerTax {
   /** The source's VAT type, for example `Reduced`, `Normal` or `Without`. */
   vatType: string;
   percent: number;
-  /** Negative on allowances and corrections. */
+  /** The source's precise amount as decimal text, any number of decimals (`"2.3789916"`). Negative on allowances and corrections. */
+  amountPrecise: string;
+  /** `amountPrecise` rounded half away from zero to integer cents. */
   amountCents: number;
 }
 
 /**
- * One booked debit/credit pair of the source's subledger. Amounts are integer
- * cents and carry the source's sign (allowances are negative).
+ * One booked debit/credit pair of the source's subledger. Amounts carry the
+ * source's sign (allowances are negative). The gross amount is whole cents;
+ * net and tax amounts are kept as the source's precise decimal text and, for
+ * cent-based rules, rounded half away from zero to cents. Add precise amounts
+ * with `sumDecimals`, never as floating-point numbers.
  */
 export interface LedgerLine {
   businessDate: LocalDate;
@@ -65,6 +70,9 @@ export interface LedgerLine {
   command: string;
   currency: string;
   grossCents: number;
+  /** The source's precise net amount as decimal text (`"12.5210084"`). */
+  netPrecise: string;
+  /** `netPrecise` rounded half away from zero to integer cents. */
   netCents: number;
   /** Passed through as received; normalisation happens in the posting rules. */
   taxes: LedgerTax[];

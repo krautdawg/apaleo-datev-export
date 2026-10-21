@@ -78,7 +78,7 @@
         "name": "Accommodation 7%",
         "number": "5011",
         "type": "Revenues",
-        "parentNumber": "5010"
+        "parentNumber": "RevenueAccommodation"
       },
       "command": "PostCharge",
       "currency": "EUR",
@@ -210,7 +210,7 @@
         "name": "Accommodation 7%",
         "number": "5011",
         "type": "Revenues",
-        "parentNumber": "5010"
+        "parentNumber": "RevenueAccommodation"
       },
       "command": "PostCharge",
       "currency": "EUR",
@@ -244,7 +244,7 @@
         "name": "Accommodation 7%",
         "number": "5011",
         "type": "Revenues",
-        "parentNumber": "5010"
+        "parentNumber": "RevenueAccommodation"
       },
       "command": "PostCharge",
       "currency": "EUR",

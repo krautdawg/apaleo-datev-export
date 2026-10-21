@@ -6,7 +6,18 @@ import { ACCOUNT_TYPES, type AccountRef, type LedgerLine } from '../core/source.
 import { accountLengthFinding } from './account-length.js';
 import { automaticRate, isAllowedOnAutomatic, isAutomaticLifted, taxKeyRate } from './automatic-accounts.js';
 import { resolve } from './resolve.js';
-import { ANY_TYPE, VAT_ACCOUNT_TYPES, VAT_RELEVANT_TYPES, parsePercent, type Mapping, type MappingRow, type Skr } from './types.js';
+import { isHistoricalRow, shippedTemplate, templateWildcardAccount } from './template.js';
+import {
+  ANY_TYPE,
+  PERSONAL_ACCOUNT_TYPE,
+  VAT_ACCOUNT_TYPES,
+  VAT_RELEVANT_TYPES,
+  WILDCARD,
+  parsePercent,
+  type Mapping,
+  type MappingRow,
+  type Skr,
+} from './types.js';
 
 export interface CheckMappingOptions {
   sachkontenlaenge: number;
@@ -229,6 +240,11 @@ interface Booked {
 interface Unmapped extends Booked {
   rate: number | undefined;
   row: MappingRow | undefined;
+  /**
+   * Set for accounts outside the chart with a parent (per-reservation and folio
+   * accounts): they are reported once per parent, type and rate.
+   */
+  group?: { parent: string; accounts: Set<string> };
 }
 
 interface Mismatch extends Booked {
@@ -252,6 +268,8 @@ function add<T extends Booked>(map: Map<string, T>, key: string, line: LedgerLin
 }
 
 const byAccount = (a: Booked, b: Booked) => a.account.type.localeCompare(b.account.type) || a.account.number.localeCompare(b.account.number);
+
+const MAX_EXAMPLES = 3;
 
 /**
  * Checks every account booked in `lines` against the mapping:
@@ -298,14 +316,28 @@ export function checkCoverage(
         }));
         continue;
       }
-      const rated = VAT_RELEVANT_TYPES.has(account.type) && !row;
-      add(unmapped, `${account.number}\u0000${account.type}${rated ? `\u0000${rate}` : ''}`, line, () => ({
-        account, rate, row, lines: 0, grossCents: 0,
+      const rated = VAT_RELEVANT_TYPES.has(account.type) && (!row || row.apaleoAccount !== account.number);
+      const parent = !chart?.has(account.number) ? account.parentNumber : undefined;
+      const key = `${parent === undefined ? account.number : `parent ${parent}`}\u0000${account.type}${rated ? `\u0000${rate}` : ''}`;
+      add(unmapped, key, line, () => ({
+        account: parent === undefined ? account : { number: parent, name: chart?.find(parent, account.type)?.name ?? parent, type: account.type },
+        rate,
+        row,
+        lines: 0,
+        grossCents: 0,
+        ...(parent === undefined ? {} : { group: { parent, accounts: new Set<string>() } }),
       }));
+      unmapped.get(key)?.group?.accounts.add(account.number);
     }
   }
+  const hint: Hint = {
+    sachkontenlaenge: options.sachkontenlaenge,
+    skr,
+    wildcardRow: (type, rate) =>
+      mapping.rows.find((row) => row.apaleoAccount === WILDCARD && row.apaleoType === type && parsePercent(row.apaleoVatPercent) === rate),
+  };
   return [
-    ...[...unmapped.values()].sort(byAccount).map(unmappedFinding),
+    ...[...unmapped.values()].sort(byAccount).map((entry) => unmappedFinding(entry, hint)),
     ...(unknownRate.lines > 0 ? [unknownRateFinding(unknownRate)] : []),
     ...[...mismatches.values()].sort(byAccount).map((entry) => mismatchFinding(entry, options.sachkontenlaenge, skr)),
   ];
@@ -315,22 +347,87 @@ function bookedText({ lines, grossCents }: Pick<Booked, 'lines' | 'grossCents'>)
   return `${lines} line${lines === 1 ? '' : 's'}, gross ${formatCents(grossCents)}`;
 }
 
-function unmappedFinding(entry: Unmapped): Finding {
-  const { account, rate, row } = entry;
-  const what = `apaleo account ${account.number} (${account.type}, "${account.name}")`;
+interface Hint {
+  sachkontenlaenge: number;
+  /** The template's accounts are shown as examples when the SKR is known. */
+  skr: Skr | undefined;
+  /** The mapping's wildcard row for a VAT-relevant type at a rate, if it has one. */
+  wildcardRow: (type: string, rate: number) => MappingRow | undefined;
+}
+
+/**
+ * The fix when an empty parent row wins over an empty wildcard row that already
+ * exists (resolve prefers the parent): name that row instead of asking to add it.
+ * The template leaves the 2020 rows (5 and 16 %) empty on purpose.
+ */
+function emptyWildcardFix(wildcard: MappingRow, type: string, rate: number): string {
+  if (isHistoricalRow(wildcard)) {
+    return (
+      `the wildcard row for ${type} at ${rate} % on line ${wildcard.line} is empty on purpose: ${rate} % applied only ` +
+      `from 1 July to 31 December 2020. If the lines at ${rate} % are correct, fill in datev_account on line ${wildcard.line} ` +
+      `with your Steuerberater; otherwise correct the VAT rate in apaleo`
+    );
+  }
+  return `fill in datev_account on the wildcard row for ${type} at ${rate} % on line ${wildcard.line}`;
+}
+
+/** The wildcard row to add for a type, as it is written in the file, with the template's account as example. */
+function wildcardHint(type: string, rate: number | undefined, { sachkontenlaenge, skr }: Hint): string {
+  const rated = VAT_RELEVANT_TYPES.has(type);
+  const template = skr === undefined ? undefined : templateWildcardAccount(shippedTemplate(skr), type, rated ? rate : undefined, sachkontenlaenge);
+  if (!rated) {
+    const debtor = type === PERSONAL_ACCOUNT_TYPE ? ' (collective debtor)' : '';
+    return `the wildcard row \`*;${type};;;${template ?? '<DATEV account>'}\`${debtor}`;
+  }
+  return `a wildcard row \`*;${type};;${rate};<DATEV account>;;${rate}\`${template === undefined ? '' : ` (template: ${template})`}`;
+}
+
+/**
+ * `E-UNMAPPED` with the row to change: an exact empty row by its line; an empty
+ * parent row with the wildcard row to add instead (for VAT-relevant types never
+ * "fill in the parent row": one DATEV account cannot serve every rate); no row
+ * at all with the row or wildcard row to add.
+ */
+function unmappedFinding(entry: Unmapped, hint: Hint): Finding {
+  const { account, rate, row, group } = entry;
+  const vatRelevant = VAT_RELEVANT_TYPES.has(account.type);
+  const at = vatRelevant && rate !== undefined ? ` at ${rate} %` : '';
+  let what = `apaleo account ${account.number} (${account.type}, "${account.name}") is`;
+  if (group) {
+    const accounts = [...group.accounts].sort();
+    const more = accounts.length > MAX_EXAMPLES ? ` and ${accounts.length - MAX_EXAMPLES} more` : '';
+    const count = accounts.length === 1 ? `1 ${account.type} account` : `${accounts.length} ${account.type} accounts`;
+    what = `${count} of reservations or folios under parent ${group.parent}${at} (${accounts.slice(0, MAX_EXAMPLES).join(', ')}${more}) ${accounts.length === 1 ? 'is' : 'are'}`;
+  }
+  const emptyParent = row && row.apaleoAccount !== WILDCARD && row.apaleoAccount !== (group ? undefined : account.number);
+  const wildcard = wildcardHint(account.type, rate, hint);
   let fix: string;
-  if (row) {
+  if (row && !emptyParent) {
     fix = `fill in datev_account on line ${row.line} of the mapping file`;
-  } else if (VAT_RELEVANT_TYPES.has(account.type) && rate === undefined) {
+  } else if (vatRelevant && rate === undefined) {
     fix = `the lines carry more than one VAT rate, so no wildcard applies; add a row for ${account.number} ${account.type}`;
-  } else if (VAT_RELEVANT_TYPES.has(account.type) && account.type !== 'Revenues') {
-    fix = `add a row for ${account.number} ${account.type}, or a wildcard row (*) for ${account.type} at ${rate} %`;
+  } else if (account.type === 'Revenues' && row) {
+    fix = `the parent row for ${row.apaleoAccount} on line ${row.line} has no DATEV account; add a row for ${account.number} Revenues with a DATEV account for${at}`;
+  } else if (account.type === 'Revenues') {
+    fix = `add a row with apaleo_account ${account.number}, apaleo_type Revenues and a DATEV account`;
+  } else if (row && vatRelevant) {
+    const existing = rate === undefined ? undefined : hint.wildcardRow(account.type, rate);
+    const add = existing && rate !== undefined ? emptyWildcardFix(existing, account.type, rate) : `add ${wildcard}`;
+    fix = `the parent row for ${row.apaleoAccount} on line ${row.line} has no DATEV account and does not apply to ${account.type} at different VAT rates; ${add}`;
+  } else if (row) {
+    fix = `fill in datev_account for the parent row ${row.apaleoAccount} on line ${row.line}, or add ${wildcard}`;
+  } else if (group && vatRelevant) {
+    fix = `add ${wildcard}`;
+  } else if (group) {
+    fix = `add a row for ${group.parent} ${account.type} or ${wildcard}`;
+  } else if (vatRelevant) {
+    fix = `add a row for ${account.number} ${account.type}, or a wildcard row (*) for ${account.type}${at}: ${wildcard.replace(/^a wildcard row /, '')}`;
   } else {
     fix = `add a row with apaleo_account ${account.number}, apaleo_type ${account.type} and a DATEV account`;
   }
   return {
     code: 'E-UNMAPPED',
-    message: `${what} is not mapped (${bookedText(entry)}): ${fix}`,
+    message: `${what} not mapped (${bookedText(entry)}): ${fix}`,
     field: 'apaleo_account',
     value: account.number,
   };

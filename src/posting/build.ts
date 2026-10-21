@@ -3,6 +3,7 @@ import { REPORT_PROBLEM_HINT } from '../core/errors.js';
 import type { Finding } from '../core/findings.js';
 import type { AccountRef, LedgerLine } from '../core/source.js';
 import { VAT_ACCOUNT_TYPES, checkCoverage, datevVatRate, resolve, type Mapping, type MappingRow } from '../mapping/index.js';
+import { apaleoVatOf, type ApaleoVat } from './apaleo-vat.js';
 import { lineFinding, percentText, rowText } from './describe.js';
 import { belegfeld1, buchungstext, costCentres } from './fields.js';
 import { guardVat, type PostedSide } from './guard.js';
@@ -24,6 +25,7 @@ type LineOutcome =
       roundingCents: number;
       /** The VAT rate of the booking (0 without VAT). */
       rate: number;
+      apaleoVat: ApaleoVat[];
     };
 
 interface PostingContext {
@@ -64,7 +66,7 @@ export function buildBookings(lines: readonly LedgerLine[], mapping: Mapping, ch
     } else if (outcome.kind === 'booked') {
       bookings.push(outcome.booking);
       findings.push(...outcome.findings);
-      summary.addBooking(line, outcome.booking, outcome.debit, outcome.credit, outcome.roundingCents);
+      summary.addBooking(line, outcome.booking, outcome.debit, outcome.credit, outcome.roundingCents, outcome.apaleoVat);
       const roundings = outcome.findings.filter((finding) => finding.code === 'W-VAT-ROUNDING').length;
       if (roundings > 0) vatRoundingByRate.set(outcome.rate, (vatRoundingByRate.get(outcome.rate) ?? 0) + roundings);
     }
@@ -125,7 +127,16 @@ function postLine(line: LedgerLine, context: PostingContext): LineOutcome {
   const guard = guardVat({ line, taxes, release, debit: d, credit: c, vatSide });
   if (guard.failed) return { kind: 'failed', findings: guard.findings };
   const booking = toBooking(line, d, c, vatSide, context);
-  return { kind: 'booked', booking, debit: d, credit: c, findings: guard.findings, roundingCents: guard.roundingCents, rate: vatSide?.rate ?? 0 };
+  return {
+    kind: 'booked',
+    booking,
+    debit: d,
+    credit: c,
+    findings: guard.findings,
+    roundingCents: guard.roundingCents,
+    rate: vatSide?.rate ?? 0,
+    apaleoVat: apaleoVatOf(line, release),
+  };
 }
 
 /** The row for one side, or undefined when it is missing or has no DATEV account (reported as `E-UNMAPPED`). */
@@ -165,7 +176,7 @@ function toBooking(
     ...(vatSide && vatSide.row.buKey !== '' ? { buKey: vatSide.row.buKey } : {}),
     belegdatum: line.businessDate,
     belegfeld1: belegfeld1(line, options.belegfeld1),
-    buchungstext: buchungstext(line, labelled.ref, chart),
+    buchungstext: buchungstext(line, labelled.ref, chart, vatSide?.rate ?? 0),
     ...costCentres([...(vatSide ? [vatSide.row] : []), konto.row, gegenkonto.row]),
     sourceEntryNumbers: [line.sourceEntryNumber],
   };

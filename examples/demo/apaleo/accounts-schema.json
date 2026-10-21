@@ -145,7 +145,7 @@
       "isArchived": false,
       "subAccounts": [
         {
-          "accountNumber": "5010",
+          "accountNumber": "RevenueAccommodation",
           "name": "Accommodation",
           "type": "Revenues",
           "parentNumber": "5000",
@@ -156,7 +156,7 @@
               "accountNumber": "5011",
               "name": "Accommodation 7%",
               "type": "Revenues",
-              "parentNumber": "5010",
+              "parentNumber": "RevenueAccommodation",
               "hasChildren": false,
               "isArchived": false,
               "vat": {
@@ -168,7 +168,7 @@
               "accountNumber": "5019",
               "name": "Accommodation 19%",
               "type": "Revenues",
-              "parentNumber": "5010",
+              "parentNumber": "RevenueAccommodation",
               "hasChildren": false,
               "isArchived": false,
               "vat": {
@@ -179,7 +179,7 @@
           ]
         },
         {
-          "accountNumber": "5100",
+          "accountNumber": "RevenueFoodAndBeverages",
           "name": "Food and Beverages",
           "type": "Revenues",
           "parentNumber": "5000",
@@ -190,7 +190,7 @@
               "accountNumber": "5110",
               "name": "Food",
               "type": "Revenues",
-              "parentNumber": "5100",
+              "parentNumber": "RevenueFoodAndBeverages",
               "hasChildren": true,
               "isArchived": false,
               "subAccounts": [
@@ -212,7 +212,7 @@
               "accountNumber": "5120",
               "name": "Beverages",
               "type": "Revenues",
-              "parentNumber": "5100",
+              "parentNumber": "RevenueFoodAndBeverages",
               "hasChildren": true,
               "isArchived": false,
               "subAccounts": [
@@ -233,7 +233,7 @@
           ]
         },
         {
-          "accountNumber": "5900",
+          "accountNumber": "RevenueOther",
           "name": "Other Revenues",
           "type": "Revenues",
           "parentNumber": "5000",
@@ -244,7 +244,7 @@
               "accountNumber": "5919",
               "name": "Other Revenues 19%",
               "type": "Revenues",
-              "parentNumber": "5900",
+              "parentNumber": "RevenueOther",
               "hasChildren": false,
               "isArchived": false,
               "vat": {
@@ -256,7 +256,7 @@
               "accountNumber": "5990",
               "name": "Other Revenues 0%",
               "type": "Revenues",
-              "parentNumber": "5900",
+              "parentNumber": "RevenueOther",
               "hasChildren": false,
               "isArchived": true,
               "vat": {

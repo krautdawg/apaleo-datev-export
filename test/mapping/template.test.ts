@@ -53,7 +53,7 @@ function templateRows(template: Template, sachkontenlaenge: number): MappingRowV
 describe.each(SKRS)('SKR%s hotel template', (skr) => {
   it('names its version and has a "Vorschlag" comment and no BU key on every rule', async () => {
     const template = await loadTemplate(skr);
-    expect(template.id).toBe(`skr${skr}-hotel@1`);
+    expect(template.id).toBe(`skr${skr}-hotel@2`);
     expect(template.rules.length).toBeGreaterThan(15);
     for (const rule of template.rules) {
       expect(rule.comment).toMatch(/^Vorschlag/);
@@ -88,6 +88,7 @@ describe.each(SKRS)('SKR%s hotel template', (skr) => {
     const accounts = skr === '03'
       ? { e7: '8300', e19: '8400', e0: '8200', kasse: '1000', transit: '1360', ford: '1410', anz7: '1711', anz19: '1718', anz0: '1719' }
       : { e7: '4300', e19: '4400', e0: '4200', kasse: '1600', transit: '1460', ford: '1210', anz7: '3260', anz19: '3272', anz0: '3280' };
+    const loss = skr === '03' ? { v7: '2401', v19: '2406' } : { v7: '6931', v19: '6936' };
     expect(find(rows, '5011')?.datevAccount).toBe(accounts.e7); // Accommodation 7%
     expect(find(rows, '5019')?.datevAccount).toBe(accounts.e19); // Accommodation 19%
     expect(find(rows, '5111')?.datevAccount).toBe(accounts.e7); // Food 7%
@@ -114,10 +115,15 @@ describe.each(SKRS)('SKR%s hotel template', (skr) => {
       ['Liabilities', '7', accounts.anz7],
       ['Liabilities', '19', accounts.anz19],
       ['Liabilities', '0', accounts.anz0],
+      ['Liabilities', '16', ''],
+      ['Liabilities', '5', ''],
       ['Receivables', '', accounts.ford],
+      ['AccountsReceivable', '', '10000'],
+      ['LossOfAccountsReceivable', '7', loss.v7],
+      ['LossOfAccountsReceivable', '19', loss.v19],
     ]);
     // Parents get no row; 3000 (guest and booking) has children of the same type.
-    for (const parent of ['1000', '1610', '5000', '5010', '5100', '3000']) expect(find(rows, parent)).toBeUndefined();
+    for (const parent of ['1000', '1610', '5000', 'RevenueAccommodation', 'RevenueFoodAndBeverages', '3000']) expect(find(rows, parent)).toBeUndefined();
   });
 });
 
@@ -150,7 +156,12 @@ describe('template rules', () => {
       ['*', '3260', '7'],
       ['*', '3272', '19'],
       ['*', '3280', '0'],
+      ['*', '', ''],
+      ['*', '', ''],
       ['*', '1210', ''],
+      ['*', '10000', ''],
+      ['*', '6931', '7'],
+      ['*', '6936', '19'],
     ]);
   });
 
@@ -166,8 +177,57 @@ describe('template rules', () => {
   });
 
   it('leaves accounts no rule matches unmapped', async () => {
-    const { rows } = suggestRows([account('5300', 'Parking', 'Revenues', { vat: { type: 'Reduced', percent: 5 } })], await loadTemplate('03'), 4);
+    const { rows } = suggestRows([account('5300', 'Parking', 'Revenues', { vat: { type: 'Reduced', percent: 10 } })], await loadTemplate('03'), 4);
     expect(find(rows, '5300')).toMatchObject({ datevAccount: '', comment: expect.stringContaining('Keine Vorlage-Regel') });
+  });
+
+  it.each(SKRS)('SKR%s: suggests no-show and cancellation fees at 7 %% before the generic 7 %% rule', async (skr) => {
+    const chart = [
+      account('RevenueNoShow_Reduced:7.00', 'Revenues No-show (7%)', 'Revenues', { vat: { type: 'Reduced', percent: 7 } }),
+      account('RevenueCancellationFees_Reduced:7.00', 'Revenues Cancellation fees (7%)', 'Revenues', { vat: { type: 'Reduced', percent: 7 } }),
+      account('RevenueOther_Reduced:7.00', 'Revenues Other (7%)', 'Revenues', { vat: { type: 'Reduced', percent: 7 } }),
+    ];
+    const { rows } = suggestRows(chart, await loadTemplate(skr), 4);
+    const revenue = skr === '03' ? '8300' : '4300';
+    for (const number of ['RevenueNoShow_Reduced:7.00', 'RevenueCancellationFees_Reduced:7.00']) {
+      expect(find(rows, number)).toMatchObject({ datevAccount: revenue, datevVatPercent: '7' });
+      expect(find(rows, number)?.comment).toContain('entscheidet die Kanzlei');
+    }
+    expect(find(rows, 'RevenueOther_Reduced:7.00')?.datevAccount).toBe('');
+  });
+
+  it('leaves revenue at the 2020 rates 16 % and 5 % empty with the 2020 comment', async () => {
+    const chart = [16, 5].map((percent) => account(`RevenueOther_X:${percent}.00`, `Revenues Other (${percent}%)`, 'Revenues', { vat: { type: 'X', percent } }));
+    const { rows } = suggestRows(chart, await loadTemplate('03'), 4);
+    for (const row of rows.filter((r) => r.apaleoType === 'Revenues')) {
+      expect(row).toMatchObject({ datevAccount: '', comment: expect.stringContaining('historischer Satz 1.7.–31.12.2020') });
+      expect(row.comment).toContain('E-UNMAPPED');
+    }
+  });
+
+  it('writes no row for an empty container outside the global ledger, but keeps one a rule maps', async () => {
+    const guest = { ledger: 'guest' as const, hasChildren: true };
+    const chart = [
+      account('3000', 'Liabilities', 'Liabilities', guest),
+      account('1200', 'Receivables', 'Receivables', guest),
+      account('6900', 'Loss of Accounts Receivable', 'LossOfAccountsReceivable', guest),
+      account('CollectiveDebitor_LossOfAccountsReceivable', 'LossOfAccountsReceivable for …', 'LossOfAccountsReceivable', { ...guest, parentNumber: '6900' }),
+      account('9000', 'House Account', 'House', { hasChildren: true }),
+    ];
+    const { rows } = suggestRows(chart, await loadTemplate('03'), 4);
+    expect(find(rows, '3000')).toBeUndefined();
+    expect(find(rows, 'CollectiveDebitor_LossOfAccountsReceivable')).toBeUndefined();
+    expect(find(rows, '1200')?.datevAccount).toBe('1410');
+    // Only containers of types with wildcard rules are left out.
+    expect(find(rows, '9000')).toBeDefined();
+  });
+
+  it('notes VAT rates outside the German templates (Austrian property)', async () => {
+    const chart = [4.9, 10, 13, 20, 7, 0].map((percent) => account(`R:${percent}`, `Revenues (${percent}%)`, 'Revenues', { vat: { type: 'X', percent } }));
+    const { rows, findings } = suggestRows(chart, await loadTemplate('03'), 4);
+    expect(findings).toEqual([expect.objectContaining({ code: 'N-FOREIGN-VAT-RATES', value: '4.9,10,13,20' })]);
+    expect(findings[0]?.message).toContain('4.9 %, 10 %, 13 %, 20 %');
+    for (const percent of [4.9, 10, 13, 20]) expect(find(rows, `R:${percent}`)?.datevAccount).toBe('');
   });
 
   it('scales template numbers with trailing zeros and notes the Sachkontenlänge', async () => {

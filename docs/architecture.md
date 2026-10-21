@@ -58,12 +58,13 @@ Eine `LedgerLine` ist ein gebuchtes Paar aus Soll und Haben im Buchungsjournal d
 | `debit`, `credit` | die beiden Konten: `number`, `name`, `type`, optional `parentNumber` |
 | `command` | der Geschäftsvorfall, zum Beispiel `PostCharge`, `PostPayment` |
 | `currency` | muss für den Export `EUR` sein (sonst `E-CURRENCY`) |
-| `grossCents`, `netCents` | ganze Cent mit dem Vorzeichen der Quelle; Nachlässe sind negativ |
-| `taxes[]` | `vatType`, `percent`, `amountCents`, so weitergegeben, wie sie ankommen |
+| `grossCents` | Bruttobetrag in ganzen Cent mit dem Vorzeichen der Quelle; Nachlässe sind negativ |
+| `netPrecise`, `netCents` | Nettobetrag als genauer Dezimaltext der Quelle (apaleo schickt bis zu acht Nachkommastellen, z. B. `"12.5210084"`) und kaufmännisch auf ganze Cent gerundet |
+| `taxes[]` | `vatType`, `percent`, `amountPrecise` (genauer Dezimaltext) und `amountCents` (gerundet), so weitergegeben, wie sie ankommen |
 | `receipt`, `reference`, `referenceType` | Rechnungs- oder Zahlungsreferenz und die Reservierung, für Belegfeld 1 |
 | `sourceEntryNumber`, `source` | damit sich jede Zeile bis zur Quelle zurückverfolgen lässt |
 
-Die Kontotypen nutzen die Namen von apaleo (`Revenues`, `Payments`, `Liabilities`, `Receivables`, `CityTaxes`, `Vat`, ...), das genaueste Modell, das bisher bekannt ist. Eine andere Quelle ordnet ihre Konten diesen Typen zu. Beträge sind immer ganze Cent: Rechne Gleitkommazahlen am Rand um, wie es `toCents` in `src/core/money.ts` tut, und lehne Beträge unter einem Cent ab.
+Die Kontotypen nutzen die Namen von apaleo (`Revenues`, `Payments`, `Liabilities`, `Receivables`, `CityTaxes`, `Vat`, ...), das genaueste Modell, das bisher bekannt ist. Eine andere Quelle ordnet ihre Konten diesen Typen zu. Der Bruttobetrag ist immer ganze Cent: Rechne Gleitkommazahlen am Rand um, wie es `toCents` in `src/core/money.ts` tut, und lehne Bruttobeträge unter einem Cent ab. Netto- und Steuerbeträge dürfen genauer sein; behalte sie als Dezimaltext (`netPrecise`, `amountPrecise`) und runde sie für die Cent-Felder kaufmännisch (`decimalToCents`). Genaue Beträge addierst du mit `sumDecimals` exakt, nie als Gleitkommazahlen.
 
 `getAccountTotals` liefert die Daten für die optionale Vollständigkeitsprüfung (`checks.aggregates`). Eine Quelle ohne solche Summen kann eine leere Liste von Konten zurückgeben.
 

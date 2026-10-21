@@ -1,0 +1,140 @@
+{
+  "transactions": [
+    {
+      "timestamp": "2026-10-21T11:46:28Z",
+      "date": "2026-10-22",
+      "debitedAccount": {
+        "name": "Receivables for Reservation DHNEKKIT-1",
+        "number": "DHNEKKIT-1_Receivables",
+        "parentNumber": "1200",
+        "type": "Receivables"
+      },
+      "creditedAccount": {
+        "name": "Liabilities for Reservation DHNEKKIT-1 (13%)",
+        "number": "DHNEKKIT-1_Liabilities/Reduced:13.00",
+        "parentNumber": "3000",
+        "type": "Liabilities"
+      },
+      "command": "PostCharge",
+      "currency": "EUR",
+      "grossAmount": -93.02,
+      "netAmount": -82.31858407,
+      "taxes": [
+        {
+          "type": "Reduced",
+          "percent": 13,
+          "amount": -10.70141593
+        }
+      ],
+      "receipt": {
+        "type": "Reservation",
+        "number": "DHNEKKIT-1-V0"
+      },
+      "sourceEntryNumber": "000000019",
+      "reference": "DHNEKKIT-1",
+      "referenceType": "Guest"
+    },
+    {
+      "timestamp": "2026-10-21T11:46:28Z",
+      "date": "2026-10-22",
+      "debitedAccount": {
+        "name": "Receivables for Reservation DHNEKKIT-1",
+        "number": "DHNEKKIT-1_Receivables",
+        "parentNumber": "1200",
+        "type": "Receivables"
+      },
+      "creditedAccount": {
+        "name": "Liabilities for Reservation DHNEKKIT-1 (20%)",
+        "number": "DHNEKKIT-1_Liabilities/Normal:20.00",
+        "parentNumber": "3000",
+        "type": "Liabilities"
+      },
+      "command": "PostCharge",
+      "currency": "EUR",
+      "grossAmount": -19.98,
+      "netAmount": -16.65,
+      "taxes": [
+        {
+          "type": "Normal",
+          "percent": 20,
+          "amount": -3.33
+        }
+      ],
+      "receipt": {
+        "type": "Reservation",
+        "number": "DHNEKKIT-1-V0"
+      },
+      "sourceEntryNumber": "000000018",
+      "reference": "DHNEKKIT-1",
+      "referenceType": "Guest"
+    },
+    {
+      "timestamp": "2026-10-21T11:46:28Z",
+      "date": "2026-10-22",
+      "debitedAccount": {
+        "name": "Receivables for Reservation DHNEKKIT-1",
+        "number": "DHNEKKIT-1_Receivables",
+        "parentNumber": "1200",
+        "type": "Receivables"
+      },
+      "creditedAccount": {
+        "name": "Revenues Accommodation (13%)",
+        "number": "RevenueAccommodation_Reduced:13.00",
+        "parentNumber": "5000",
+        "type": "Revenues"
+      },
+      "command": "PostCharge",
+      "currency": "EUR",
+      "grossAmount": 93.02,
+      "netAmount": 82.31858407,
+      "taxes": [
+        {
+          "type": "Reduced",
+          "percent": 13,
+          "amount": 10.70141593
+        }
+      ],
+      "receipt": {
+        "type": "Reservation",
+        "number": "DHNEKKIT-1-V0"
+      },
+      "sourceEntryNumber": "000000015",
+      "reference": "DHNEKKIT-1",
+      "referenceType": "Guest"
+    },
+    {
+      "timestamp": "2026-10-21T11:46:28Z",
+      "date": "2026-10-22",
+      "debitedAccount": {
+        "name": "Receivables for Reservation DHNEKKIT-1",
+        "number": "DHNEKKIT-1_Receivables",
+        "parentNumber": "1200",
+        "type": "Receivables"
+      },
+      "creditedAccount": {
+        "name": "Revenues Food and beverages (20%)",
+        "number": "RevenueFoodAndBeverages_Normal:20.00",
+        "parentNumber": "5000",
+        "type": "Revenues"
+      },
+      "command": "PostCharge",
+      "currency": "EUR",
+      "grossAmount": 19.98,
+      "netAmount": 16.65,
+      "taxes": [
+        {
+          "type": "Normal",
+          "percent": 20,
+          "amount": 3.33
+        }
+      ],
+      "receipt": {
+        "type": "Reservation",
+        "number": "DHNEKKIT-1-V0"
+      },
+      "sourceEntryNumber": "000000014",
+      "reference": "DHNEKKIT-1",
+      "referenceType": "Guest"
+    }
+  ]
+}
